@@ -3,8 +3,8 @@
 Created by: EPA133a Group xx
 
 |    Name     | Student Number |
-| :---------: | :------------- |
-| Mary White  | 1234567        |
+| :---------: |:---------------|
+| Mary White  | 1234568        |
 | David Brown | 7654321        |
 
 ## Introduction
