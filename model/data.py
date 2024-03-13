@@ -59,12 +59,6 @@ def convert_data():
     # strip the trailing whitespaces 
     df['name'] = df['name'].apply(lambda x: x.strip())
 
-    # define dataframe for duplicates
-    duplicaterows = df[df['road'] == 'N1']
-    # subset based on latitude and longitude
-    duplicaterows = duplicaterows[duplicaterows.duplicated(subset=['lat', 'lon'])]
-    # sort by chainage
-    duplicaterows.sort_values(by=['km'])
     # change condition from letters to numbers in order to compare them
     df['conditionNum'] = 0
     df.loc[df['condition'] == 'A', 'conditionNum'] = 1
@@ -175,7 +169,7 @@ def convert_data():
                 for element in contains_right:
                     remove_index.append(element[0])
 
-            # if both right and left, keep both 
+            # if both right and left, keep both
             if len(contains_right) == 1 and len(contains_left) == 1 and len(contains_none) == 0:
                 continue
 
@@ -192,7 +186,7 @@ def convert_data():
     # add model type
     df['model_type'] = 'bridge'
 
-    # sort values based on km and road name, in reversed direction to drive in opposite direction
+    # sort values based on km and road name
     df = df.sort_values(by=['road', 'km'])
 
     # reset index
@@ -203,9 +197,79 @@ def convert_data():
     df = df.drop("index", axis='columns')
     df = df.drop("zone", axis='columns')
 
+    # ADD SOURCES AND SINKS
+
+    # import roads to get source and sink
+    df_roads = pd.read_csv('../data/roads.csv')
+
+    # all rows with chainage equal to zero are sources
+    sources = df_roads[df_roads.chainage == 0.000]
+
+    # modify sources dataframe conform current dataset
+    sources = sources.copy()
+    sources.rename({'chainage': 'km'}, axis=1, inplace=True)
+    sources['type'] = 'source'
+    sources['model_type'] = 'source'
+    sources['name'] = 'source'
+    sources['condition'] = None
+    sources['length'] = 0
+
+    # drop unnecessary columns
+    sources = sources.drop("lrp", axis='columns')
+    sources = sources.drop("gap", axis='columns')
+
+    # reset index
+    sources = sources.reset_index(drop=True)
+
+    # add sources to dataframe
+    df = pd.concat([df, sources])
+
+    # initialize list with indexes which are sinks
+    sinks_indexes = []
+    # sort roads dataframe based on road name and chainage
+    df_roads = df_roads.sort_values(by=['road', 'chainage'])
+    # reset index
+    df_roads = df_roads.reset_index(drop=True)
+    # retrieve all unique roads in roads column of dataframe
+    roads = df_roads['road'].unique().tolist()
+
+    # for each road
+    for road in roads:
+        # subset this road
+        road_subset = df_roads[df_roads['road'] == road]
+        # retrieve index of last row
+        road_last_index = road_subset.index[-1]
+        # add row to indexes list
+        sinks_indexes.append(road_last_index)
+
+    # get all rows with index in sinks_indexes and assign as sink in dataframe
+    sinks = df_roads.iloc[sinks_indexes]
+
+    # modify sinks dataframe conform dataset
+    sinks = sinks.copy()
+    sinks.rename({'chainage': 'km'}, axis=1, inplace=True)
+    sinks['type'] = 'sink'
+    sinks['model_type'] = 'sink'
+    sinks['name'] = 'sink'
+    sinks['condition'] = None
+    sinks['length'] = 0
+
+    # drop unnecessary columns
+    sinks = sinks.drop("lrp", axis='columns')
+    sinks = sinks.drop("gap", axis='columns')
+
+    # add sources to dataset
+    df = pd.concat([df, sinks])
+
+    # sort values based on km and road name
+    df = df.sort_values(by=['road', 'km'])
+
+    # reset index
+    df = df.reset_index()
+
     # convert dataframe to csv
-    df.to_csv('../data/bridges_cleaned_without_sourcesink.csv')
+    df.to_csv('../data/bridges_cleaned.csv')
 
 
 # call function
-convert_data()
+df = convert_data()
