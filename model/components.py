@@ -64,6 +64,12 @@ class Bridge(Infra):
     def get_delay_time(self):
         return self.delay_time
 
+    def get_name(self):
+        """
+        Retrieve bridges name to choose between L/R bridge
+        """
+        return self.name
+
 
 # ---------------------------------------------------------------
 class Link(Infra):
@@ -281,6 +287,23 @@ class Vehicle(Agent):
             self.location.remove(self)
             return
         elif isinstance(next_infra, Bridge):
+            # Get bridge name to check for L and R side
+            bridge_name = next_infra.get_name()
+            # Get location of current object
+            prev_x_loc = self.location.pos[0]
+            # Get location of next object
+            next_x_loc = next_infra.pos[0]
+            # Check if the bridge is L and if the next location is more east than the current location
+            if bridge_name[-2:] == '(L' and prev_x_loc < next_x_loc:
+                # Skip L bridge
+                self.drive_to_next(distance)
+            # Check if the bridge is R and if the next location is more west than the current location
+            elif bridge_name[-2:] == '(R' and prev_x_loc > next_x_loc:
+                # Skip R bridge
+                self.drive_to_next(distance)
+            else:
+                # If this bridge shouldn't be skipped, continue
+                pass
             self.waiting_time = next_infra.get_delay_time()
             if self.waiting_time > 0:
                 # arrive at the bridge and wait
