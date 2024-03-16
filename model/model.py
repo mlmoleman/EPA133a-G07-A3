@@ -127,8 +127,10 @@ class BangladeshModel(Model):
 
     file_name = '../data/demo-4.csv'
 
-    def __init__(self, seed=None, x_max=500, y_max=500, x_min=0, y_min=0):
+    def __init__(self, seed=None, x_max=500, y_max=500, x_min=0, y_min=0, collapse_dict:defaultdict={'A': 0, 'B': 0, 'C': 0, 'D': 0, 'X': 0}, routing_type: str = "straight"):
 
+        self.routing_type = routing_type
+        self.collapse_dict = collapse_dict
         self.schedule = BaseScheduler(self)
         self.running = True
         self.path_ids_dict = defaultdict(lambda: pd.Series())
@@ -136,7 +138,13 @@ class BangladeshModel(Model):
         self.sources = []
         self.sinks = []
 
+        self.long_length_threshold = 200
+        self.medium_length_threshold = 50
+        self.short_length_threshold = 10
+
         self.generate_model()
+
+        self.driving_time_of_trucks = []
 
     def generate_model(self):
         """
@@ -241,7 +249,14 @@ class BangladeshModel(Model):
 
     # TODO
     def get_route(self, source):
-        return self.get_straight_route(source)
+        if self.routing_type == "random":
+            return self.get_random_route(source)
+        elif self.routing_type == "straight":
+            return self.get_straight_route(source)
+        elif self.routing_type == "shortest":
+            return self.get_shortest_path_route(source)
+        else:
+            return self.get_straight_route(source)
 
     def get_straight_route(self, source):
         """
