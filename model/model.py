@@ -1,12 +1,82 @@
 from mesa import Model
 from mesa.time import BaseScheduler
 from mesa.space import ContinuousSpace
-from components import Source, Sink, SourceSink, Bridge, Link, Intersection
+from components import Source, Sink, SourceSink, Bridge, Link, Intersection, Vehicle
 import pandas as pd
 from collections import defaultdict
-
-
+from statistics import mean
+from mesa.datacollection import DataCollector
 # ---------------------------------------------------------------
+def get_steps(model):
+    return model.schedule.steps
+
+
+def get_avg_delay(model):
+    """
+    Returns the average delay time
+    """
+    delays = [a.delay_time for a in model.schedule.agents if isinstance(a, Bridge)]
+    return mean(delays)
+
+
+def get_avg_driving(model):
+    """
+    Returns the average driving time of vehicles on road N1
+    """
+
+    if len(model.driving_time_of_trucks) > 0:
+        return sum(model.driving_time_of_trucks) / len(model.driving_time_of_trucks)
+    else:
+        return 0
+
+
+def get_conditions(model) -> object:
+    """
+    Returns the frequency of conditions for each step
+    """
+    conditions = [a.condition for a in model.schedule.agents if isinstance(a, Bridge)]
+    freq_a = conditions.count('A')  # retrieve frequency of condition A in list of conditions per step
+    freq_b = conditions.count('B')  # retrieve frequency of condition B in list of conditions per step
+    freq_c = conditions.count('C')  # retrieve frequency of condition C in list of conditions per step
+    freq_d = conditions.count('D')  # retrieve frequency of condition D in list of conditions per step
+    freq_x = conditions.count('X')  # retrieve frequency of condition X in list of conditions per step
+    return freq_a, freq_b, freq_c, freq_d, freq_x  # return frequencies
+
+
+def get_condition_frequency_a(model):
+    """
+    Retrieve the frequency of condition A
+    """
+    return get_conditions(model)[0]
+
+
+def get_condition_frequency_b(model):
+    """
+    Retrieve the frequency of condition B
+    """
+    return get_conditions(model)[1]
+
+
+def get_condition_frequency_c(model):
+    """
+    Retrieve the frequency of condition C
+    """
+    return get_conditions(model)[2]
+
+
+def get_condition_frequency_d(model):
+    """
+    Retrieve the frequency of condition D
+    """
+    return get_conditions(model)[3]
+
+
+def get_condition_frequency_x(model):
+    """
+    Retrieve the frequency of condition X
+    """
+    return get_conditions(model)[4]
+
 def set_lat_lon_bound(lat_min, lat_max, lon_min, lon_max, edge_ratio=0.02):
     """
     Set the HTML continuous space canvas bounding box (for visualization)
@@ -73,6 +143,7 @@ class BangladeshModel(Model):
         generate the simulation model according to the csv file component information
 
         Warning: the labels are the same as the csv column labels
+        A network x model will be generated.
         """
 
         df = pd.read_csv(self.file_name)
@@ -182,6 +253,7 @@ class BangladeshModel(Model):
         """
         Advance the simulation by one step.
         """
+        #self.datacollector.collect(self)
         self.schedule.step()
 
 # EOF -----------------------------------------------------------
