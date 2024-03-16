@@ -1,0 +1,11 @@
+road,chainage,lrp,lat,lon,gap,type,name,geometry
+N102,0.0,LRPS,23.4789716,91.1181938,,intersection,Start of road from N1 Mainamati,POINT (91.1181938 23.4789716)
+N104,1.878,LRP001a,23.0095278,91.3814438,,intersection,Right to Comilla Left to Chittagong,POINT (91.3814438 23.0095278)
+N112,1.22,LRP001b,23.0187493,91.3705271,,intersection,N1,POINT (91.3705271 23.0187493)
+N120,17.79,LRP017b,23.3808049,91.2382219,,intersection,N1,POINT (91.2382219 23.3808049)
+N129,2.79,LRPE,22.5015833,91.7134722,,intersection,End of road Intersecting N1,POINT (91.7134722 22.5015833)
+N2,0.0,LRPS,23.7059167,90.5214438,,intersection,Road Start from N1 at Katchpur,POINT (90.5214438 23.7059167)
+N1,8.763,LRP009a,23.7060833,90.5215271,,intersection,Road to Sylhet (N2),POINT (90.5215271 23.7060833)
+N105,12.803,LRP012a,23.7851941,90.5688049,,intersection,N2 Dhaka-Sylhet -Jaflong Road,POINT (90.5688049 23.7851941)
+N203,0.441,LRPSc,24.0507778,90.9897774,,intersection,Overpass N2,POINT (90.9897774 24.0507778)
+N209,0.0,LRPS,24.8775549,91.8753604,,intersection,Start of the Road at Humayun Rashid Chattar Intersection between N2 and N209  ,POINT (91.8753604 24.8775549)
