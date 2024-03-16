@@ -1,5 +1,6 @@
 from mesa import Agent
 from enum import Enum
+import random
 
 
 # ---------------------------------------------------------------
@@ -62,7 +63,101 @@ class Bridge(Infra):
 
     # TODO
     def get_delay_time(self):
+        if self.condition == "X":
+            if self.length > self.model.long_length_threshold:
+                self.delay_time = random.triangular(60, 240, 120)
+            elif self.length > self.model.medium_length_threshold:
+                self.delay_time = random.uniform(45, 90)
+            elif self.length > self.model.short_length_threshold:
+                self.delay_time = random.uniform(15, 60)
+            else:
+                self.delay_time = random.uniform(10, 20)
+        else:
+            pass
         return self.delay_time
+
+    def get_repair_time(self):
+        self.repair_time = 24 * 60
+        return self.repair_time
+
+    def get_name(self):
+        """
+        Retrieve bridges name to choose between L/R bridge
+        """
+        return self.name
+
+    def change_condition(self, new_condition: str):
+        """Change the condition of a bridge to another condition"""
+        self.condition = new_condition
+        return self.condition
+
+    def collapse(self):
+        """A bridge collapses according to its chance of collapsing.
+         A collapsed bridge will get the condition 'X'. """
+        if self.collapse_chance > random.random():
+            self.change_condition("X")
+        else:
+            pass
+        return
+
+    def deteriorate(self):
+        """A bridge's condition deteriorates"""
+        # you can call this function in the model class,
+        # so that for every certain amount of time,bridge conditions deteriorate
+        # or for example,if a small storm happens,bridge conditions can deteriorate.
+        # please note that deterioration of a bridge is not the same as collapse of a bridge!
+
+        condition_list = ["A", "B", "C", "D", "X"]  # list of all possible bridge conditions
+        # if a bridge is already in the worst condition ("X"), it cannot deteriorate any further
+        if self.condition == "X":
+            pass
+        else:
+            # for the remaining conditions, deteriorate the bridge by setting the condition to one condition worse
+            # get the index in the condition_list of the current bridge condition
+            condition_index = condition_list.index(self.condition)
+            # increase index by 1 and set that condition to the new current bridge condition
+            self.condition = condition_list[condition_index + 1]
+            return self.condition
+
+    def check_repair(self):
+        # if the bridge is not yet in repair, but it is collapsed, set it in repair status
+        if not self.in_repair and self.condition == "X":
+            self.in_repair = True
+            self.delay_time = self.get_delay_time()
+        # if bridge is in repair, check if its repair time is already finished
+        elif self.in_repair:
+            if self.repair_time == 0:
+                self.finish_repair()
+            else:
+                # if the counter is not zero, condition is still collapsed. Counter is decreased with one.
+                self.repair_time -= 1
+        return
+
+    def finish_repair(self):
+        """
+        A bridge is repaired
+        """
+
+        # repair the bridge by setting the condition to condition A
+        # condition before collapse would also be possible. But assumption was made that bridge condition will
+        # increase when repairing bridge.
+        # if the counter is zero, change the condition
+        self.change_condition("A")
+        # reset repair time of bridge
+        self.repair_time = self.get_repair_time()
+        # set in_repair to False
+        self.in_repair = False
+        # bridge will not be delayed due to repair anymore, so set delay_time back to 0
+        self.delay_time = 0
+        return
+
+    def step(self):
+        # first, the bridge has a chance to collapse. This is done in the collapse function.
+        self.collapse()
+        # Optional: let the bridge deteriorate
+        # self.deteriorate()
+        # Next, check if bridge needs repair and if repair is finished.
+        self.check_repair()
 
 
 # ---------------------------------------------------------------
@@ -220,6 +315,9 @@ class Vehicle(Agent):
         self.waiting_time = 0
         self.waited_at = None
         self.removed_at_step = None
+        # set an attribute 'next_infra_name' to distinguish the L and R bridge
+        self.next_infra_name = None
+        self.driving_time = 0
 
     def __str__(self):
         return "Vehicle" + str(self.unique_id) + \
@@ -281,6 +379,23 @@ class Vehicle(Agent):
             self.location.remove(self)
             return
         elif isinstance(next_infra, Bridge):
+            # Get bridge name to check for L and R side
+            bridge_name = next_infra.get_name()
+            # Get location of current object
+            prev_x_loc = self.location.pos[0]
+            # Get location of next object
+            next_x_loc = next_infra.pos[0]
+            # Check if the bridge is L and if the next location is more east than the current location
+            if bridge_name[-2:] == '(L' and prev_x_loc < next_x_loc:
+                # Skip L bridge
+                self.drive_to_next(distance)
+            # Check if the bridge is R and if the next location is more west than the current location
+            elif bridge_name[-2:] == '(R' and prev_x_loc > next_x_loc:
+                # Skip R bridge
+                self.drive_to_next(distance)
+            else:
+                # If this bridge shouldn't be skipped, continue
+                pass
             self.waiting_time = next_infra.get_delay_time()
             if self.waiting_time > 0:
                 # arrive at the bridge and wait
