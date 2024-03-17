@@ -208,8 +208,8 @@ def convert_data():
     # modify sources dataframe conform current dataset
     sources = sources.copy()
     sources.rename({'chainage': 'km'}, axis=1, inplace=True)
-    sources['type'] = 'source'
-    sources['model_type'] = 'source'
+    sources['type'] = 'sourcesink'
+    sources['model_type'] = 'sourcesink'
     sources['name'] = 'source'
     sources['condition'] = None
     sources['length'] = 0
@@ -248,8 +248,8 @@ def convert_data():
     # modify sinks dataframe conform dataset
     sinks = sinks.copy()
     sinks.rename({'chainage': 'km'}, axis=1, inplace=True)
-    sinks['type'] = 'sink'
-    sinks['model_type'] = 'sink'
+    sinks['type'] = 'sourcesink'
+    sinks['model_type'] = 'sourcesink'
     sinks['name'] = 'sink'
     sinks['condition'] = None
     sinks['length'] = 0
