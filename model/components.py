@@ -56,6 +56,8 @@ class Bridge(Infra):
         super().__init__(unique_id, model, length, name, road_name)
 
         self.condition = condition
+        self.collapse_chance = self.model.collapse_dict[self.condition]
+        self.in_repair = False
 
         # TODO
         self.delay_time = self.random.randrange(0, 10)
