@@ -69,7 +69,7 @@ main_df = insert_links(df, dict_links)
 # Adding an id to every object
 main_df['id'] = main_df.index
 # Drop the Unnamed column
-main_df.drop(columns=['Unnamed: 0'])
+main_df.drop(columns=['Unnamed: 0'], inplace=True)
 
 # Convert dataframe into csv
 main_df.to_csv('../data/bridges_intersections_links.csv')
