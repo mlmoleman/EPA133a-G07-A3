@@ -2,37 +2,40 @@ import pandas as pd
 import numpy as np
 
 # Retrieve the Bridge dataframe
-df = pd.read_csv('../data/bridges_cleaned.csv')
+df = pd.read_csv('../data/bridges_cleaned_intersected_long.csv')
 
-# Create a subset of the dataframe containing only bridges on road N1
-df_N1 = df[df['road']=='N1']
-# Sort the dataframe based on km, so the bridges follow the correct order
-df_N1_sorted = df_N1.sort_values(by='km', ascending = False).reset_index().drop(labels='index', axis=1)
 # Create a list of the indexes
-index = df_N1_sorted.index
+index = df.index
 
 def create_links(df, indexes):
     # Create an empty dictionary
     inserting_links = {}
-    # Loop over all the bridges, skipping the first one
+    # Loop over all the objects, skipping the first one as that is a sourcesink
     for i in index[1:]:
-        # Determine the latitude of the bridge
+        # Determine the latitude of the object
         lat = df.iloc[i, df.columns.get_indexer(['lat'])].values
-        # Determine the longitude of the bridge
+        # Determine the longitude of the object
         lon = df.iloc[i, df.columns.get_indexer(['lon'])].values
-        # Determine the latitude of the previous bridge
+        # Determine the latitude of the previous object
         lat_prev = df.iloc[i-1, df.columns.get_indexer(['lat'])].values
-        # Determine the longitude of the previous bridge
+        # Determine the longitude of the previous object
         lon_prev = df.iloc[i-1, df.columns.get_indexer(['lon'])].values
-        # Check if the lat and lon of this bridge and the previous bridge are not the same
-        if not (lat == lat_prev and lon == lon_prev):
+        # Determine the type of the object
+        type_obj = df.iloc[i, df.columns.get_indexer(['type'])].values
+        # Determine the type of the previous object
+        type_prev_obj = df.iloc[i-1, df.columns.get_indexer(['type'])].values
+        # Check if the lat and lon of this object and the previous object and are not the same
+        # AND if the type of this object and the previous object are not both equal to 'sourcesink'
+        if not (lat == lat_prev and lon == lon_prev) and not type_obj == type_prev_obj == 'sourcesink':
             # if that is the case insert link
-            # determine the length of the link by calculating the difference in km of the bridges
-            # and substracting half of the length of the bridges.
+            # determine the length of the link by calculating the difference in km of the objects
+            # and substracting half of the length of the objects.
             length = abs((1000*df.iloc[i, df.columns.get_indexer(['km'])].values
                       - 1000*df.iloc[i-1, df.columns.get_indexer(['km'])].values
                       - 0.5*df.iloc[i, df.columns.get_indexer(['length'])].values
                       - 0.5*df.iloc[i-1, df.columns.get_indexer(['length'])].values))
+            # Determine the road to which the link belongs
+            road = df.iloc[i, df.columns.get_indexer(['road'])].values[0]
             # Calculate the km of the link by taking the average
             km = (df.iloc[i, df.columns.get_indexer(['km'])].values[0]+df.iloc[i-1, df.columns.get_indexer(['km'])].values[0])/2
             # Calculate the latitude of the link by interpolating
@@ -40,10 +43,10 @@ def create_links(df, indexes):
             # Calculate the longitude of the link by interpolating
             lon = (df.iloc[i, df.columns.get_indexer(['lon'])].values[0]+df.iloc[i-1, df.columns.get_indexer(['lon'])].values[0])/2
             # Add the link to the dictionary with the necessary attributes
-            inserting_links[i] = {'road': ['N1'], 'km': [km], 'type': ['link'], 'name': ['link'], 'length': [round(length[0])], 'condition': None, 'lat': [lat], 'lon': [lon], 'model_type': ['link']}
+            inserting_links[i] = {'road': [road], 'km': [km], 'type': ['link'], 'name': ['link'], 'length': [round(length[0])], 'condition': None, 'lat': [lat], 'lon': [lon], 'model_type': ['link']}
     return inserting_links
 
-dict_links = create_links(df_N1_sorted, index)
+dict_links = create_links(df, index)
 #%%
 # Create a function to insert the links into the main dataframe
 def insert_links(df, dict_links):
@@ -67,9 +70,13 @@ def insert_links(df, dict_links):
     return main_df
 
 # Call the function to check the outcome
-main_df = insert_links(df_N1_sorted, dict_links)
+main_df = insert_links(df, dict_links)
 # Adding an id to every object
 main_df['id'] = main_df.index
+# Drop the Unnamed column
+main_df.drop(columns=['Unnamed: 0'], inplace=True)
+# Set index to road column
+main_df.set_index('road', inplace=True)
 
 # Convert dataframe into csv
-#main_df.to_csv('../data/bridges_cleaned_linked.csv')
+main_df.to_csv('../data/bridges_intersections_links.csv')
