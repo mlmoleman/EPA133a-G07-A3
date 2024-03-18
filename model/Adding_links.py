@@ -70,6 +70,8 @@ main_df = insert_links(df, dict_links)
 main_df['id'] = main_df.index
 # Drop the Unnamed column
 main_df.drop(columns=['Unnamed: 0'], inplace=True)
+# Set index to road column
+main_df.set_index('road', inplace=True)
 
 # Convert dataframe into csv
 main_df.to_csv('../data/bridges_intersections_links.csv')
