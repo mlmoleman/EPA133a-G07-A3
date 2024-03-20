@@ -1,12 +1,12 @@
-,road,chainage,lrp,lat,lon,gap,type,name,geometry
-0,N102,0.0,LRPS,23.4789716,91.1181938,,intersection,Start of road from N1 Mainamati,POINT (91.1181938 23.4789716)
-1,N104,1.0,LRP001,23.0093056,91.3898052,,intersection,Km post missing,POINT (91.3898052 23.0093056)
-2,N105,0.0,LRPS,23.6904163,90.5466108,,intersection,"Starts of road from N1,Dhaka teknaf road at Madanpur.",POINT (90.5466108 23.6904163)
-3,N2,0.0,LRPS,23.7059167,90.5214438,,intersection,Road Start from N1 at Katchpur,POINT (90.5214438 23.7059167)
-4,N8,0.0,LRPS,23.7021389,90.4353608,,intersection,"Start of road Infront of Padma CNG Station ,Dholaipur,Jatrabari ,Dhaka.",POINT (90.4353608 23.7021389)
-5,N1,8.429,LRP008b,23.7045833,90.5188327,BE,intersection,Bridge end,POINT (90.5188327 23.7045833)
-6,N102,82.133,LRP082a,24.045833,91.1146667,,intersection,Box Culvert,POINT (91.1146667 24.045833)
-7,N105,12.257,LRP012,23.7805549,90.5700549,,intersection,"Bangabondhu Bridge 118 km, Mymenshingh 151 km, Gazipur 37 km",POINT (90.5700549 23.7805549)
-8,N204,0.0,LRPS,24.1479163,91.3466108,,intersection,Road start from N2 at Jagannathganj.,POINT (91.3466108 24.1479163)
-9,N207,0.0,LRPS,24.2948608,91.51025,,intersection,Road start from N2 at Mirpur.,POINT (91.51025 24.2948608)
-10,N208,57.495,LRPE,24.8775549,91.8753604,,intersection,"Road end at Humayun Rashid Chattar, Intersection od N2 and N208",POINT (91.8753604 24.8775549)
+,road,chainage,lrp,lat,lon,gap,type,name,geometry,intersec_to
+0,N102,0.0,LRPS,23.4789716,91.1181938,,intersection,Start of road from N1 Mainamati,POINT (91.1181938 23.4789716),N1
+1,N104,0.445,LRPSa,23.0092778,91.3952497,,intersection,Box culvert,POINT (91.3952497 23.0092778),N1
+2,N105,0.0,LRPS,23.6904163,90.5466108,,intersection,"Starts of road from N1,Dhaka teknaf road at Madanpur.",POINT (90.5466108 23.6904163),N1
+3,N2,0.0,LRPS,23.7059167,90.5214438,,intersection,Road Start from N1 at Katchpur,POINT (90.5214438 23.7059167),N1
+4,N8,0.0,LRPS,23.7021389,90.4353608,,intersection,"Start of road Infront of Padma CNG Station ,Dholaipur,Jatrabari ,Dhaka.",POINT (90.4353608 23.7021389),N1
+5,N1,8.0,LRP008,23.7020556,90.5157222,,intersection,Km post missing,POINT (90.5157222 23.7020556),N2
+6,N102,81.714,LRP082,24.0421108,91.1139722,,intersection,Madhebpur 23 km Sylhet170 km,POINT (91.1139722 24.0421108),N2
+7,N105,12.257,LRP012,23.7805549,90.5700549,,intersection,"Bangabondhu Bridge 118 km, Mymenshingh 151 km, Gazipur 37 km",POINT (90.5700549 23.7805549),N2
+8,N204,0.0,LRPS,24.1479163,91.3466108,,intersection,Road start from N2 at Jagannathganj.,POINT (91.3466108 24.1479163),N2
+9,N207,0.0,LRPS,24.2948608,91.51025,,intersection,Road start from N2 at Mirpur.,POINT (91.51025 24.2948608),N2
+10,N208,56.595,LRP058,24.8694993,91.8760271,,intersection,Sylhet 5 km,POINT (91.8760271 24.8694993),N2
