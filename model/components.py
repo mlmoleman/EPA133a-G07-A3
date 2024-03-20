@@ -78,9 +78,9 @@ class Bridge(Infra):
             pass
         return self.delay_time
 
-    def get_repair_time(self):
-        self.repair_time = 24 * 60
-        return self.repair_time
+    # def get_repair_time(self):
+    #     self.repair_time = 24 * 60
+    #     return self.repair_time
 
     def get_name(self):
         """
@@ -159,7 +159,7 @@ class Bridge(Infra):
         # Optional: let the bridge deteriorate
         # self.deteriorate()
         # Next, check if bridge needs repair and if repair is finished.
-        self.check_repair()
+        #self.check_repair()
 
 
 # ---------------------------------------------------------------
