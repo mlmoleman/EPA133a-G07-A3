@@ -129,9 +129,9 @@ class BangladeshModel(Model):
 
     step_time = 1
 
-    file_name = '../data/bridges_intersections_links.csv'
+    file_name = '../data/demo-4.csv'
 
-    def __init__(self, seed=None, x_max=500, y_max=500, x_min=0, y_min=0, collapse_dict:defaultdict={'A': 0, 'B': 0, 'C': 0, 'D': 0, 'X': 0}, routing_type: str = "shortest"):
+    def __init__(self, seed=None, x_max=500, y_max=500, x_min=0, y_min=0, collapse_dict:defaultdict={'A': 0, 'B': 0, 'C': 0, 'D': 0, 'X': 0}, routing_type: str = "random"):
 
         self.routing_type = routing_type
         self.collapse_dict = collapse_dict
@@ -310,7 +310,8 @@ class BangladeshModel(Model):
         df = pd.read_csv(self.file_name)
 
         # a list of names of roads to be generated
-        roads = df['road'].unique().tolist()
+        #roads = df['road'].unique().tolist()
+        roads = ['N1', 'N2']
 
         df_objects_all = []
         for road in roads:
@@ -431,7 +432,7 @@ class BangladeshModel(Model):
         """
         return self.path_ids_dict[source, None]
 
-    def get_route(self, source, destination):
+    def get_route(self, source):
         if self.routing_type == "random":
             return self.get_random_route(source)
         elif self.routing_type == "straight":
