@@ -18,33 +18,18 @@ def data_network():
     # reposition columns
     df_bridges = df_bridges[['road', 'km', 'type', 'model_type', 'name', 'length', 'condition', 'lat', 'lon', 'intersec_to']]
 
-    # import intersections main data
-    df_intersections = pd.read_csv('../data/intersections_main.csv')
+    # import intersections data
+    df_intersections = pd.read_csv('../data/intersections.csv')
     # change chainage into km
     df_intersections.rename({'chainage': 'km'}, axis=1, inplace=True)
     # create model_type
     df_intersections['model_type'] = 'intersection'
     # create length
     df_intersections['length'] = 0
-    # align intersection columns with bridge colum
     # create condition
     df_intersections['condition'] = None
-    # format colum,ns
+    # format columns
     df_intersections = df_intersections[['road', 'km', 'type', 'model_type', 'name', 'length', 'condition', 'lat', 'lon', 'intersec_to']]
-
-    # import intersections side data
-    df_intersections2 = pd.read_csv('../data/intersections_side.csv')
-    # change chainage into km
-    df_intersections2.rename({'chainage': 'km'}, axis=1, inplace=True)
-    # create model_type
-    df_intersections2['model_type'] = 'intersection'
-    # create length
-    df_intersections2['length'] = 0
-    # align intersection columns with bridge colum
-    # create condition
-    df_intersections2['condition'] = None
-    # format colum,ns
-    df_intersections2 = df_intersections2[['road', 'km', 'type', 'model_type', 'name', 'length', 'condition', 'lat', 'lon', 'intersec_to']]
     
     # get all intersected roads
     intersections = df_intersections['intersec_to'].unique().tolist()
@@ -55,9 +40,8 @@ def data_network():
     df_bridges = df_bridges[df_bridges['road'].isin(intersections)]
     # keep all roads which are still in intersections list, so longer than 25 km
     df_intersections = df_intersections[df_intersections['intersec_to'].isin(intersections)]
-    df_intersections2 = df_intersections2[df_intersections2['intersec_to'].isin(intersections)]
     # get the dataframes which needs to be merged
-    frames = [df_bridges, df_intersections, df_intersections2]
+    frames = [df_bridges, df_intersections]
     # merge dataframes into df
     df = pd.concat(frames)
 
