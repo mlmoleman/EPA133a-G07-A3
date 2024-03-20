@@ -148,7 +148,7 @@ class BangladeshModel(Model):
         self.long_length_threshold = 200
         self.medium_length_threshold = 50
         self.short_length_threshold = 10
-
+        self.generate_network()
         self.generate_model()
 
         self.driving_time_of_trucks = []
