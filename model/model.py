@@ -144,6 +144,7 @@ class BangladeshModel(Model):
         self.sinks = []
         self.G= nx.DiGraph() #initialise network
 
+
         self.long_length_threshold = 200
         self.medium_length_threshold = 50
         self.short_length_threshold = 10
@@ -159,15 +160,19 @@ class BangladeshModel(Model):
         """
 
         # import data
-        df = pd.read_csv('../data/bridges_cleaned_intersected_long.csv')
-        # remove unnecessary columns
-        df.drop(columns=['Unnamed: 0'], inplace=True)
+        df = pd.read_csv('../data/bridges_intersections_links.csv')
+        # drop old id
+        df = df.drop("id", axis='columns')
         # sort roads dataframe based on road name and chainage
         df = df.sort_values(by=['road', 'km'])
         # reset index
         df = df.reset_index(drop=False)
+        # set new index as ID
+        df.rename(columns={'index': 'id'}, inplace=True)
         # retrieve all roads in dataset
         roads = df['road'].unique().tolist()
+        # initialize graph
+        G = nx.DiGraph()
         # for each road in list roads
         for road in roads:
             # if equal to N1 or N2
@@ -186,8 +191,9 @@ class BangladeshModel(Model):
                 for index, row in road_subset.iterrows():
                     # if index does not equal intersection between N1 and N2, otherwise skip
                     if index != intersec_main:
-                        self.G.add_node(row['index'], pos=(row['lat'], row['lon']), len=row['length'],
-                                   typ=row['model_type'], intersec=row['intersec_to'])     #remember, self.G is the graph instantiated in the model
+                        G.add_node(row['id'], pos=(row['lat'], row['lon']), len=row['length'],
+                                   typ=row['model_type'], intersec=row['intersec_to'])
+
                 # retrieve all edges between bridges for one road
                 edges = [(index, index + 1) for index, row in road_subset.iterrows()]
                 # remove last one, which is out of bound
@@ -199,12 +205,12 @@ class BangladeshModel(Model):
                 # remove last one, which is out of bound
                 edges.pop()
                 # add all edges
-                self.G.add_edges_from(edges)
+                G.add_edges_from(edges)
 
                 # get model type of all nodes
-        typ = nx.get_node_attributes(self.G, 'typ')
+        typ = nx.get_node_attributes(G, 'typ')
         # get road which is intersected with N1 or N2
-        intersec_to = nx.get_node_attributes(self.G, 'intersec')
+        intersec_to = nx.get_node_attributes(G, 'intersec')
         # get all key, value pairs in dictionaries
         for key_typ, value_typ in typ.items():
             # if value equals intersection as model type
@@ -216,16 +222,16 @@ class BangladeshModel(Model):
                     # subset data based on road name
                     road_subset = df[df['road'] == intersected_road]
                     # retrieve sourcesink of side road which became intersection
-                    old_index = road_subset.iloc[0]['index']
+                    old_index = road_subset.iloc[0]['id']
                     # replace with intersection node on main road
-                    df.loc[old_index, 'index'] = key_typ
+                    df.loc[old_index, 'id'] = key_typ
                     # skip first row, which is old sourcesink of road
                     # now became intersection, already node of N1 or N2
                     road_subset = road_subset.iloc[1:, :]
                     # for each row in subset data
                     for index, row in road_subset.iterrows():
                         # add node based on index
-                        self.G.add_node(row['index'], pos=(row['lat'], row['lon']), len=row['length'],
+                        G.add_node(row['id'], pos=(row['lat'], row['lon']), len=row['length'],
                                    typ=row['model_type'], intersec=row['intersec_to'])
                     # retrieve all edges between bridges for one road
                     edges = [(index, index + 1) for index, row in road_subset.iterrows()]
@@ -238,27 +244,27 @@ class BangladeshModel(Model):
                     # remove last one, which is out of bound
                     edges.pop()
                     # add intersection edge between main and side road
-                    intersected_edge = [(key_typ, road_subset.iloc[0]['index'])]
+                    intersected_edge = [(key_typ, road_subset.iloc[0]['id'])]
                     # to edges list
                     edges += intersected_edge
                     # also get reversed edge
-                    rev_intersected_edge = [(road_subset.iloc[0]['index'], key_typ)]
+                    rev_intersected_edge = [(road_subset.iloc[0]['id'], key_typ)]
                     # and add to edges list
                     edges += rev_intersected_edge
                     # add all edges
-                    self.G.add_edges_from(edges)
+                    G.add_edges_from(edges)
                 # if road equal to N1 or N2
                 elif intersected_road == 'N1' or intersected_road == 'N2':
                     # subset data based on condition that road equals N2
                     road_subset = df[df['road'] == 'N2']
                     # retrieve first index, which is old sourcesink
-                    old_index = road_subset.iloc[0]['index']
+                    old_index = road_subset.iloc[0]['id']
                     # replace old index with intersected node label with N1
-                    df['index'].replace(old_index, key_typ)
+                    df['id'].replace(old_index, key_typ)
                     # remove first row
                     road_subset = road_subset.iloc[1:, :]
                     # retrieve index
-                    first_bridge_N2 = road_subset.iloc[0]['index']
+                    first_bridge_N2 = road_subset.iloc[0]['id']
                     # get intersected edge between N1 and N2
                     intersected_edge = [(key_typ, first_bridge_N2)]
                     # add intersected edge to list
@@ -268,9 +274,9 @@ class BangladeshModel(Model):
                     # also add reversed intersected edge
                     edges += rev_intersected_edge
                     # add edges to network
-                    self.G.add_edges_from(edges)
+                    G.add_edges_from(edges)
 
-        for u, v in self.G.edges:
+        for u, v in G.edges:
             if abs(v - u) == 1:
                 # obtain distance between nodes
                 distance = abs((df.iloc[u, df.columns.get_indexer(['km'])].values) -
@@ -278,7 +284,7 @@ class BangladeshModel(Model):
                 # from kilometers to meters
                 distance = distance * 1000
                 # assign distance as weight to edge
-                self.G[u][v]['weight'] = distance
+                G[u][v]['weight'] = distance
 
             else:
                 distance = abs((df.iloc[v - 1, df.columns.get_indexer(['km'])].values) -
@@ -286,10 +292,10 @@ class BangladeshModel(Model):
                 # from kilometers to meters
                 distance = distance * 1000
                 # assign distance as weight to edge
-                self.G[u][v]['weight'] = distance
+                G[u][v]['weight'] = distance
 
         # return network
-        return self.G
+        return G
 
 
     def generate_model(self):
