@@ -26,7 +26,7 @@ scenario: int = 0
 # Loop over the scenarios
 for dictionary in collapse_dict:
     # Define the parameters that need to be assessed by the batch runner
-    params = {"collapse_dict": [dictionary]}
+    params = {"collapse_dict": [dictionary], "routing_type": "straight"}
 
     # Settings of batch runner
     results = batch_run(
