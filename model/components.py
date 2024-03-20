@@ -56,29 +56,32 @@ class Bridge(Infra):
         super().__init__(unique_id, model, length, name, road_name)
 
         self.condition = condition
+        self.collapse_chance = self.model.collapse_dict[self.condition]
+        self.collapsed = False
+        #self.in_repair = False
 
         # TODO
-        self.delay_time = self.random.randrange(0, 10)
+        #self.delay_time = self.random.randrange(0, 10)
         # print(self.delay_time)
 
     # TODO
     def get_delay_time(self):
-        if self.condition == "X":
+        if self.collapsed:
             if self.length > self.model.long_length_threshold:
-                self.delay_time = random.triangular(60, 240, 120)
+                self.delay_time = self.random.triangular(60, 240, 120)
             elif self.length > self.model.medium_length_threshold:
-                self.delay_time = random.uniform(45, 90)
+                self.delay_time = self.random.uniform(45, 90)
             elif self.length > self.model.short_length_threshold:
-                self.delay_time = random.uniform(15, 60)
+                self.delay_time = self.andom.uniform(15, 60)
             else:
-                self.delay_time = random.uniform(10, 20)
+                self.delay_time = self.random.uniform(10, 20)
         else:
-            pass
+            self.delay_time = 0
         return self.delay_time
 
-    def get_repair_time(self):
-        self.repair_time = 24 * 60
-        return self.repair_time
+    # def get_repair_time(self):
+    #     self.repair_time = 24 * 60
+    #     return self.repair_time
 
     def get_name(self):
         """
@@ -86,79 +89,22 @@ class Bridge(Infra):
         """
         return self.name
 
-    def change_condition(self, new_condition: str):
-        """Change the condition of a bridge to another condition"""
-        self.condition = new_condition
-        return self.condition
+    # def change_condition(self, new_condition: str):
+    #     """Change the condition of a bridge to another condition"""
+    #     self.condition = new_condition
+    #     return self.condition
 
     def collapse(self):
-        """A bridge collapses according to its chance of collapsing.
-         A collapsed bridge will get the condition 'X'. """
-        if self.collapse_chance > random.random():
-            self.change_condition("X")
+        """A bridge collapses according to its chance of collapsing."""
+        if not self.collapsed and self.collapse_chance > self.random.random():
+            self.collapsed = True
         else:
             pass
-        return
-
-    def deteriorate(self):
-        """A bridge's condition deteriorates"""
-        # you can call this function in the model class,
-        # so that for every certain amount of time,bridge conditions deteriorate
-        # or for example,if a small storm happens,bridge conditions can deteriorate.
-        # please note that deterioration of a bridge is not the same as collapse of a bridge!
-
-        condition_list = ["A", "B", "C", "D", "X"]  # list of all possible bridge conditions
-        # if a bridge is already in the worst condition ("X"), it cannot deteriorate any further
-        if self.condition == "X":
-            pass
-        else:
-            # for the remaining conditions, deteriorate the bridge by setting the condition to one condition worse
-            # get the index in the condition_list of the current bridge condition
-            condition_index = condition_list.index(self.condition)
-            # increase index by 1 and set that condition to the new current bridge condition
-            self.condition = condition_list[condition_index + 1]
-            return self.condition
-
-    def check_repair(self):
-        # if the bridge is not yet in repair, but it is collapsed, set it in repair status
-        if not self.in_repair and self.condition == "X":
-            self.in_repair = True
-            self.delay_time = self.get_delay_time()
-        # if bridge is in repair, check if its repair time is already finished
-        elif self.in_repair:
-            if self.repair_time == 0:
-                self.finish_repair()
-            else:
-                # if the counter is not zero, condition is still collapsed. Counter is decreased with one.
-                self.repair_time -= 1
-        return
-
-    def finish_repair(self):
-        """
-        A bridge is repaired
-        """
-
-        # repair the bridge by setting the condition to condition A
-        # condition before collapse would also be possible. But assumption was made that bridge condition will
-        # increase when repairing bridge.
-        # if the counter is zero, change the condition
-        self.change_condition("A")
-        # reset repair time of bridge
-        self.repair_time = self.get_repair_time()
-        # set in_repair to False
-        self.in_repair = False
-        # bridge will not be delayed due to repair anymore, so set delay_time back to 0
-        self.delay_time = 0
         return
 
     def step(self):
         # first, the bridge has a chance to collapse. This is done in the collapse function.
         self.collapse()
-        # Optional: let the bridge deteriorate
-        # self.deteriorate()
-        # Next, check if bridge needs repair and if repair is finished.
-        self.check_repair()
-
 
 # ---------------------------------------------------------------
 class Link(Infra):
