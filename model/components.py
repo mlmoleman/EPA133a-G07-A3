@@ -68,13 +68,13 @@ class Bridge(Infra):
     def get_delay_time(self):
         if self.collapsed:
             if self.length > self.model.long_length_threshold:
-                self.delay_time = random.triangular(60, 240, 120)
+                self.delay_time = self.random.triangular(60, 240, 120)
             elif self.length > self.model.medium_length_threshold:
-                self.delay_time = random.uniform(45, 90)
+                self.delay_time = self.random.uniform(45, 90)
             elif self.length > self.model.short_length_threshold:
-                self.delay_time = random.uniform(15, 60)
+                self.delay_time = self.andom.uniform(15, 60)
             else:
-                self.delay_time = random.uniform(10, 20)
+                self.delay_time = self.random.uniform(10, 20)
         else:
             self.delay_time = 0
         return self.delay_time
@@ -97,7 +97,7 @@ class Bridge(Infra):
     def collapse(self):
         """A bridge collapses according to its chance of collapsing.
          A collapsed bridge will get the condition 'X'. """
-        if not self.collapsed and self.collapse_chance > random.random():
+        if not self.collapsed and self.collapse_chance > self.random.random():
             self.collapsed = True
         else:
             pass
