@@ -172,7 +172,7 @@ class BangladeshModel(Model):
         # retrieve all roads in dataset
         roads = df['road'].unique().tolist()
         # initialize graph
-        G = nx.DiGraph()
+        self.G = nx.DiGraph()
         # for each road in list roads
         for road in roads:
             # if equal to N1 or N2
@@ -191,7 +191,7 @@ class BangladeshModel(Model):
                 for index, row in road_subset.iterrows():
                     # if index does not equal intersection between N1 and N2, otherwise skip
                     if index != intersec_main:
-                        G.add_node(row['id'], pos=(row['lat'], row['lon']), len=row['length'],
+                        self.G.add_node(row['id'], pos=(row['lat'], row['lon']), len=row['length'],
                                    typ=row['model_type'], intersec=row['intersec_to'])
 
                 # retrieve all edges between bridges for one road
@@ -205,12 +205,12 @@ class BangladeshModel(Model):
                 # remove last one, which is out of bound
                 edges.pop()
                 # add all edges
-                G.add_edges_from(edges)
+                self.G.add_edges_from(edges)
 
                 # get model type of all nodes
-        typ = nx.get_node_attributes(G, 'typ')
+        typ = nx.get_node_attributes(self.G, 'typ')
         # get road which is intersected with N1 or N2
-        intersec_to = nx.get_node_attributes(G, 'intersec')
+        intersec_to = nx.get_node_attributes(self.G, 'intersec')
         # get all key, value pairs in dictionaries
         for key_typ, value_typ in typ.items():
             # if value equals intersection as model type
@@ -231,7 +231,7 @@ class BangladeshModel(Model):
                     # for each row in subset data
                     for index, row in road_subset.iterrows():
                         # add node based on index
-                        G.add_node(row['id'], pos=(row['lat'], row['lon']), len=row['length'],
+                        self.G.add_node(row['id'], pos=(row['lat'], row['lon']), len=row['length'],
                                    typ=row['model_type'], intersec=row['intersec_to'])
                     # retrieve all edges between bridges for one road
                     edges = [(index, index + 1) for index, row in road_subset.iterrows()]
@@ -252,7 +252,7 @@ class BangladeshModel(Model):
                     # and add to edges list
                     edges += rev_intersected_edge
                     # add all edges
-                    G.add_edges_from(edges)
+                    self.G.add_edges_from(edges)
                 # if road equal to N1 or N2
                 elif intersected_road == 'N1' or intersected_road == 'N2':
                     # subset data based on condition that road equals N2
@@ -274,9 +274,9 @@ class BangladeshModel(Model):
                     # also add reversed intersected edge
                     edges += rev_intersected_edge
                     # add edges to network
-                    G.add_edges_from(edges)
+                    self.G.add_edges_from(edges)
 
-        for u, v in G.edges:
+        for u, v in self.G.edges:
             if abs(v - u) == 1:
                 # obtain distance between nodes
                 distance = abs((df.iloc[u, df.columns.get_indexer(['km'])].values) -
@@ -284,7 +284,7 @@ class BangladeshModel(Model):
                 # from kilometers to meters
                 distance = distance * 1000
                 # assign distance as weight to edge
-                G[u][v]['weight'] = distance
+                self.G[u][v]['weight'] = distance
 
             else:
                 distance = abs((df.iloc[v - 1, df.columns.get_indexer(['km'])].values) -
@@ -292,10 +292,10 @@ class BangladeshModel(Model):
                 # from kilometers to meters
                 distance = distance * 1000
                 # assign distance as weight to edge
-                G[u][v]['weight'] = distance
+                self.G[u][v]['weight'] = distance
 
         # return network
-        return G
+        return self.G
 
 
     def generate_model(self):
@@ -310,8 +310,7 @@ class BangladeshModel(Model):
         df = pd.read_csv(self.file_name)
 
         # a list of names of roads to be generated
-        #roads = df['road'].unique().tolist()
-        roads = ['N1', 'N2']
+        roads = df['road'].unique().tolist()
 
         df_objects_all = []
         for road in roads:
