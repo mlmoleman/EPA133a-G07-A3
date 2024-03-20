@@ -26,7 +26,7 @@ def create_links(df, indexes):
         type_prev_obj = df.iloc[i-1, df.columns.get_indexer(['type'])].values
         # Check if the lat and lon of this object and the previous object and are not the same
         # AND if the type of this object and the previous object are not both equal to 'sourcesink'
-        if not (lat == lat_prev and lon == lon_prev) and not type_obj == type_prev_obj == 'sourcesink':
+        if not (lat == lat_prev and lon == lon_prev) and not type_obj == type_prev_obj == 'sourcesink' and not (type_prev_obj == 'sourcesink' and type_obj == 'intersection'):
             # if that is the case insert link
             # determine the length of the link by calculating the difference in km of the objects
             # and substracting half of the length of the objects.
