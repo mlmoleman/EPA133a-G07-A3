@@ -393,7 +393,7 @@ class BangladeshModel(Model):
                 break
         return self.path_ids_dict[source, sink]
 
-    def get_shortest_path_route(self, origin, destination):
+    def get_shortest_path_route(self, source, destination):
         """
         gives the shortest path between an origin and destination,
         based on bridge network defined using NetworkX library,
@@ -402,13 +402,13 @@ class BangladeshModel(Model):
         # call network
         network = self.G
         #the dictionary key is the origin, destination combination:
-        key = origin, destination
+        key = source, destination
         # first, check if there already is a shortest path:
         if key in self.shortest_path_dict.keys():
             return self.shortest_path_dict[key]
         else:
             # compute shortest path between origin and destination based on distance (which is weight)
-            shortest_path = nx.shortest_path(network, origin, destination, weight='weight')
+            shortest_path = nx.shortest_path(network, source, destination, weight='weight')
             # format shortest path in dictionary structure
             self.shortest_path_dict[key] = shortest_path
             return self.shortest_path_dict[key]
