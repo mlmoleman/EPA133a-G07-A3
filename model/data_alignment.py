@@ -43,9 +43,7 @@ def data_network():
     # align intersection columns with bridge colum
     # create condition
     df_intersections2['condition'] = None
-    # add intersection
-    df_intersections2 = df_intersections2.assign(intersec_to=['N1', 'N1', 'N1', 'N1', 'N1', 'N2', 'N2', 'N2', 'N2', 'N2', 'N2'])
-    # format columns
+    # format colum,ns
     df_intersections2 = df_intersections2[['road', 'km', 'type', 'model_type', 'name', 'length', 'condition', 'lat', 'lon', 'intersec_to']]
     
     # get all intersected roads
@@ -56,8 +54,8 @@ def data_network():
     # keep all bridges in roads that intersect
     df_bridges = df_bridges[df_bridges['road'].isin(intersections)]
     # keep all roads which are still in intersections list, so longer than 25 km
-    df_intersections = df_intersections[df_intersections['intersec_to'].isin(intersections)] 
-    df_intersections2 = df_intersections2[df_intersections2['road'].isin(intersections)] 
+    df_intersections = df_intersections[df_intersections['intersec_to'].isin(intersections)]
+    df_intersections2 = df_intersections2[df_intersections2['intersec_to'].isin(intersections)]
     # get the dataframes which needs to be merged
     frames = [df_bridges, df_intersections, df_intersections2]
     # merge dataframes into df
@@ -69,7 +67,7 @@ def data_network():
     df = df.reset_index(drop = True)
 
     # convert to csv
-    df.to_csv('../data/bridges_cleaned_intersected.csv')
+    df.to_csv('../data/bridges_intersected.csv')
     
 # call function
 data_network()

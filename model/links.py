@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 
 # Retrieve the Bridge dataframe
-df = pd.read_csv('../data/bridges_cleaned_intersected_long.csv')
+df = pd.read_csv('../data/bridges_intersected.csv')
 
 # Create a list of the indexes
 index = df.index
@@ -79,4 +79,4 @@ main_df.drop(columns=['Unnamed: 0'], inplace=True)
 main_df.set_index('road', inplace=True)
 
 # Convert dataframe into csv
-main_df.to_csv('../data/bridges_intersections_links.csv')
+main_df.to_csv('../data/bridges_intersected_linked.csv')
