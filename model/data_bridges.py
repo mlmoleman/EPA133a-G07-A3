@@ -1,3 +1,4 @@
+# import libraries
 import pandas as pd
 import random
 
@@ -210,7 +211,7 @@ def convert_data():
     sources.rename({'chainage': 'km'}, axis=1, inplace=True)
     sources['type'] = 'sourcesink'
     sources['model_type'] = 'sourcesink'
-    sources['name'] = 'source'
+    sources['name'] = 'sourcesink'
     sources['condition'] = None
     sources['length'] = 0
 
@@ -250,7 +251,7 @@ def convert_data():
     sinks.rename({'chainage': 'km'}, axis=1, inplace=True)
     sinks['type'] = 'sourcesink'
     sinks['model_type'] = 'sourcesink'
-    sinks['name'] = 'sink'
+    sinks['name'] = 'sourcesink'
     sinks['condition'] = None
     sinks['length'] = 0
 
@@ -272,4 +273,4 @@ def convert_data():
 
 
 # call function
-df = convert_data()
+convert_data()
