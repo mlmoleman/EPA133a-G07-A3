@@ -131,7 +131,7 @@ class BangladeshModel(Model):
 
     file_name = '../data/bridges_intersected_linked.csv'
 
-    def __init__(self, seed=None, x_max=500, y_max=500, x_min=0, y_min=0, collapse_dict:defaultdict={'A': 0, 'B': 0, 'C': 0, 'D': 0, 'X': 0}, routing_type: str = "random"):
+    def __init__(self, seed=None, x_max=500, y_max=500, x_min=0, y_min=0, collapse_dict:defaultdict={'A': 0, 'B': 0, 'C': 0, 'D': 0, 'X': 0}, routing_type: str = "shortest"):
 
         self.routing_type = routing_type
         self.collapse_dict = collapse_dict
@@ -142,7 +142,7 @@ class BangladeshModel(Model):
         self.space = None
         self.sources = []
         self.sinks = []
-        self.G= nx.DiGraph() #initialise network
+        self.G = nx.DiGraph() #initialise network
 
 
         self.long_length_threshold = 200
@@ -346,14 +346,17 @@ class BangladeshModel(Model):
         while True:
             # different source and sink
             sink = self.random.choice(self.sinks)
+            print("Sink: ", sink)
             if sink is not source:
                 break
         #the dictionary key is the origin, destination combination:
         key = source, sink
+        print("Key: ", key)
         # first, check if there already is a shortest path:
         if key in self.shortest_path_dict.keys():
             return self.shortest_path_dict[key]
         else:
+            print("If statement is accessed")
             # compute shortest path between origin and destination based on distance (which is weight)
             shortest_path = nx.shortest_path(network, source, sink, weight='weight')
             # format shortest path in dictionary structure
