@@ -72,7 +72,7 @@ class Bridge(Infra):
             elif self.length > self.model.medium_length_threshold:
                 self.delay_time = self.random.uniform(45, 90)
             elif self.length > self.model.short_length_threshold:
-                self.delay_time = self.andom.uniform(15, 60)
+                self.delay_time = self.random.uniform(15, 60)
             else:
                 self.delay_time = self.random.uniform(10, 20)
         else:
@@ -190,7 +190,9 @@ class SourceSink(Source, Sink):
     """
     Generates and removes trucks
     """
+
     pass
+
 
 
 # ---------------------------------------------------------------

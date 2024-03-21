@@ -131,7 +131,7 @@ class BangladeshModel(Model):
 
     file_name = '../data/bridges_intersected_linked.csv'
 
-    def __init__(self, seed=None, x_max=500, y_max=500, x_min=0, y_min=0, collapse_dict:defaultdict={'A': 0, 'B': 0, 'C': 0, 'D': 0, 'X': 0}, routing_type: str = "random"):
+    def __init__(self, seed=None, x_max=500, y_max=500, x_min=0, y_min=0, collapse_dict:defaultdict={'A': 0, 'B': 0, 'C': 0, 'D': 0, 'X': 0}, routing_type: str = "shortest"):
 
         self.routing_type = routing_type
         self.collapse_dict = collapse_dict
@@ -142,7 +142,7 @@ class BangladeshModel(Model):
         self.space = None
         self.sources = []
         self.sinks = []
-        self.G= nx.DiGraph() #initialise network
+        self.G = nx.DiGraph() #initialise network
 
 
         self.long_length_threshold = 200
@@ -158,88 +158,79 @@ class BangladeshModel(Model):
         generate the network used within the simulation model
         returns a multi directed graph which includes bridges and intersections between roads
         """
+        # import data
+        df = pd.read_csv('../data/bridges_intersected_linked.csv')
+        # drop old id
+        df = df.drop("id", axis='columns')
+        # sort roads dataframe based on road name and chainage
+        df = df.sort_values(by=['road', 'km'])
+        # reset index
+        df = df.reset_index(drop=False)
+        # set new index as ID
+        df.rename(columns={'index': 'id'}, inplace=True)
+        # retrieve all roads in dataset
+        roads = df['road'].unique().tolist()
+        # initialize graph
+        self.G = nx.DiGraph()
+        # for each road in list roads
+        for road in roads:
+            road_subset = df[df['road'] == road]
+            for index, row in df.iterrows():
+                self.G.add_node(row['id'], pos=(row['lat'], row['lon']), len=row['length'],
+                                typ=row['model_type'], road=row['road'], intersec=row['intersec_to'])
+            # retrieve all edges between bridges for one road
+            edges = [(index, index + 1) for index, row in road_subset.iterrows()]
+            # remove last one, which is out of bound
+            edges.pop()
+            # reverse subset
+            road_subset_reversed = road_subset.iloc[::-1]
+            # get all reversed indexes and add to list of edges
+            edges += [(index, index - 1) for index, row in road_subset_reversed.iterrows()]
+            # remove last one, which is out of bound
+            edges.pop()
+            # add all edges
+            self.G.add_edges_from(edges)
 
-        def bridge_network():
-            """
-            returns a multi directed graph which includes bridges and intersections between roads
-            """
+            # get model type of all nodes
+        typ = nx.get_node_attributes(self.G, 'typ')
+        # get road which is intersected with N1 or N2
+        intersec_to = nx.get_node_attributes(self.G, 'intersec')
+        # get current roads
+        road = nx.get_node_attributes(self.G, 'road')
+        # get all key, value pairs in dictionaries
+        for key_typ, value_typ in typ.items():
+            # if value equals intersection as model type
+            if value_typ == 'intersection':
+                # current road
+                current_road = road[key_typ]
+                # get road name which intersects N1 or N2
+                intersected_road = intersec_to[key_typ]
+                # get subset of intersected road
+                subset_intersected_road = df[df['road'] == intersected_road]
+                # get all rows which are intersections
+                intersections = subset_intersected_road[subset_intersected_road['model_type'] == 'intersection']
+                # select the row for which intersection to equals current road
+                row = intersections[intersections['intersec_to'] == current_road]
+                # retrieve ID
+                row_index = row.index[0]
+                # assign intersected edge to variable
+                if (key_typ, row_index) not in self.G.edges:
+                    # add intersected edge
+                    self.G.add_edge(key_typ, row_index, weight=0)
 
-            def bridge_network():
-                """
-                returns a multi directed graph which includes bridges and intersections between roads
-                """
-                # import data
-                df = pd.read_csv('../data/bridges_intersected_linked.csv')
-                # drop old id
-                df = df.drop("id", axis='columns')
-                # sort roads dataframe based on road name and chainage
-                df = df.sort_values(by=['road', 'km'])
-                # reset index
-                df = df.reset_index(drop=False)
-                # set new index as ID
-                df.rename(columns={'index': 'id'}, inplace=True)
-                # retrieve all roads in dataset
-                roads = df['road'].unique().tolist()
-                # initialize graph
-                self.G = nx.DiGraph()
-                # for each road in list roads
-                for road in roads:
-                    road_subset = df[df['road'] == road]
-                    for index, row in df.iterrows():
-                        self.G.add_node(row['id'], pos=(row['lat'], row['lon']), len=row['length'],
-                                   typ=row['model_type'], road=row['road'], intersec=row['intersec_to'])
-                    # retrieve all edges between bridges for one road
-                    edges = [(index, index + 1) for index, row in road_subset.iterrows()]
-                    # remove last one, which is out of bound
-                    edges.pop()
-                    # reverse subset
-                    road_subset_reversed = road_subset.iloc[::-1]
-                    # get all reversed indexes and add to list of edges
-                    edges += [(index, index - 1) for index, row in road_subset_reversed.iterrows()]
-                    # remove last one, which is out of bound
-                    edges.pop()
-                    # add all edges
-                    self.G.add_edges_from(edges)
+        for u, v in self.G.edges:
+            if abs(v - u) == 1:
+                # obtain distance between nodes
+                distance = abs((df.iloc[u, df.columns.get_indexer(['km'])].values) -
+                               (df.iloc[v, df.columns.get_indexer(['km'])].values))
+                # from kilometers to meters
+                distance = distance * 1000
+                # assign distance as weight to edge
+                self.G[u][v]['weight'] = distance
 
-                    # get model type of all nodes
-                typ = nx.get_node_attributes(self.G, 'typ')
-                # get road which is intersected with N1 or N2
-                intersec_to = nx.get_node_attributes(self.G, 'intersec')
-                # get current roads
-                road = nx.get_node_attributes(self.G, 'road')
-                # get all key, value pairs in dictionaries
-                for key_typ, value_typ in typ.items():
-                    # if value equals intersection as model type
-                    if value_typ == 'intersection':
-                        # current road
-                        current_road = road[key_typ]
-                        # get road name which intersects N1 or N2
-                        intersected_road = intersec_to[key_typ]
-                        # get subset of intersected road
-                        subset_intersected_road = df[df['road'] == intersected_road]
-                        # get all rows which are intersections
-                        intersections = subset_intersected_road[subset_intersected_road['model_type'] == 'intersection']
-                        # select the row for which intersection to equals current road
-                        row = intersections[intersections['intersec_to'] == current_road]
-                        # retrieve ID
-                        row_index = row.index[0]
-                        # assign intersected edge to variable
-                        if (key_typ, row_index) not in self.G.edges:
-                            # add intersected edge
-                            self.G.add_edge(key_typ, row_index, weight=0)
+        # return network
+        return self.G
 
-                for u, v in self.G.edges:
-                    if abs(v - u) == 1:
-                        # obtain distance between nodes
-                        distance = abs((df.iloc[u, df.columns.get_indexer(['km'])].values) -
-                                       (df.iloc[v, df.columns.get_indexer(['km'])].values))
-                        # from kilometers to meters
-                        distance = distance * 1000
-                        # assign distance as weight to edge
-                        self.G[u][v]['weight'] = distance
-
-                # return network
-                return self.G
 
 
     def generate_model(self):
@@ -355,14 +346,17 @@ class BangladeshModel(Model):
         while True:
             # different source and sink
             sink = self.random.choice(self.sinks)
+            print("Sink: ", sink)
             if sink is not source:
                 break
         #the dictionary key is the origin, destination combination:
         key = source, sink
+        print("Key: ", key)
         # first, check if there already is a shortest path:
         if key in self.shortest_path_dict.keys():
             return self.shortest_path_dict[key]
         else:
+            print("If statement is accessed")
             # compute shortest path between origin and destination based on distance (which is weight)
             shortest_path = nx.shortest_path(network, source, sink, weight='weight')
             # format shortest path in dictionary structure
