@@ -190,7 +190,9 @@ class SourceSink(Source, Sink):
     """
     Generates and removes trucks
     """
+
     pass
+
 
 
 # ---------------------------------------------------------------
