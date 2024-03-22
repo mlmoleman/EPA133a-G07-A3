@@ -8,7 +8,7 @@ from model import BangladeshModel
 # ---------------------------------------------------------------
 
 # run time 5 x 24 hours; 1 tick 1 minute
-run_length = 5 * 24 * 60
+run_length = 2 * 24 * 60
 
 # run time 1000 ticks
 # run_length = 1000

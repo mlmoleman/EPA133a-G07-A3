@@ -19,21 +19,34 @@ def get_steps(model):
 
 def get_avg_delay(model):
     """
-    Returns the average delay time
+    Returns the average delay time per bridge
     """
     delays = [a.delay_time for a in model.schedule.agents if isinstance(a, Bridge)]
     return mean(delays)
+
+
+def get_avg_waiting(model):
+    """
+    Returns the average waiting time per vehicle
+    """
+    waitings = [a.waiting_time for a in model.schedule.agents if isinstance(a, Vehicle)]
+    return mean(waitings)
 
 
 def get_avg_driving(model):
     """
     Returns the average driving time of vehicles on road N1
     """
-
     if len(model.driving_time_of_trucks) > 0:
         return sum(model.driving_time_of_trucks) / len(model.driving_time_of_trucks)
     else:
         return 0
+
+
+def get_avg_collapse(model):
+    """
+    Returns the average number of collapsed bridges per time step
+    """
 
 
 def set_lat_lon_bound(lat_min, lat_max, lon_min, lon_max, edge_ratio=0.02):
@@ -87,7 +100,7 @@ class BangladeshModel(Model):
     file_name = '../data/bridges_intersected_linked.csv'
 
     def __init__(self, seed=None, x_max=500, y_max=500, x_min=0, y_min=0,
-                 collapse_dict:defaultdict={'A': 0.10, 'B': 0.20, 'C': 0.30, 'D': 0.40}, routing_type: str = "shortest"):
+                 collapse_dict:defaultdict={'A': 0.0, 'B': 0.0, 'C': 0.0, 'D': 0.0}, routing_type: str = "shortest"):
 
         self.routing_type = routing_type
         self.collapse_dict = collapse_dict
