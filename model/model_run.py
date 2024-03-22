@@ -8,10 +8,7 @@ from model import BangladeshModel
 # ---------------------------------------------------------------
 
 # run time 5 x 24 hours; 1 tick 1 minute
-run_length = 1 * 24 * 60
-
-# run time 1000 ticks
-# run_length = 1000
+run_length = 5 * 24 * 60
 
 seed = 1234567
 
@@ -25,6 +22,6 @@ for i in range(run_length):
     sim_model.step()
 
 # retrieve model data
-model_data = sim_model.datacollector.get_model_vars_dataframe()
+# model_data = sim_model.datacollector.get_model_vars_dataframe()
 # and put in CSV
-model_data.to_csv("../data/model_data.csv")
+# model_data.to_csv("../data/model_data.csv")

@@ -7,7 +7,6 @@ from collections import defaultdict
 from statistics import mean
 from mesa.datacollection import DataCollector
 import networkx as nx
-import matplotlib.pyplot as plt
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 # ---------------------------------------------------------------
@@ -24,17 +23,6 @@ def get_avg_delay(model):
     delays = [a.delay_time for a in model.schedule.agents if isinstance(a, Bridge)]
     if len(delays) > 0:
         return mean(delays)
-    else:
-        return 0
-
-
-def get_avg_waiting(model):
-    """
-    Returns the average waiting time per vehicle
-    """
-    waitings = [a.waiting_time for a in model.schedule.agents if isinstance(a, Vehicle)]
-    if len(waitings) > 0:
-        return mean(waitings)
     else:
         return 0
 
@@ -61,26 +49,42 @@ def get_avg_speed(model):
 
 def get_tot_collapsed(model):
     """
-    Returns the average number of collapsed bridges per time step
+    Returns the total number of collapsed bridges per time step
     """
     collapsed = [a.collapsed for a in model.schedule.agents if isinstance(a, Bridge)]
     return collapsed.count(True)
 
+
 def get_A_collapsed(model):
+    """
+    Returns the number of collapsed bridges per time step with condition A
+    """
     condition = 'A'
-    return model.collapsed_dict[condition]
+    return model.collapsed_conditions_dict[condition]
+
 
 def get_B_collapsed(model):
+    """
+    Returns the number of collapsed bridges per time step with condition B
+    """
     condition = 'B'
-    return model.collapsed_dict[condition]
+    return model.collapsed_conditions_dict[condition]
+
 
 def get_C_collapsed(model):
+    """
+    Returns the number of collapsed bridges per time step with condition C
+    """
     condition = 'C'
-    return model.collapsed_dict[condition]
+    return model.collapsed_conditions_dict[condition]
+
 
 def get_D_collapsed(model):
+    """
+    Returns the number of collapsed bridges per time step with condition D
+    """
     condition = 'D'
-    return model.collapsed_dict[condition]
+    return model.collapsed_conditions_dict[condition]
 
 
 def set_lat_lon_bound(lat_min, lat_max, lon_min, lon_max, edge_ratio=0.02):
@@ -134,7 +138,7 @@ class BangladeshModel(Model):
     file_name = '../data/bridges_intersected_linked.csv'
 
     def __init__(self, seed=None, x_max=500, y_max=500, x_min=0, y_min=0,
-                 collapse_dict:defaultdict={'A': 0.05, 'B': 0.1, 'C': 0.2, 'D': 0.4}, routing_type: str = "shortest"):
+                 collapse_dict: defaultdict = {'A': 0.0, 'B': 0.0, 'C': 0.0, 'D': 0.8}, routing_type: str = "shortest"):
 
         self.routing_type = routing_type
         self.collapse_dict = collapse_dict
@@ -145,18 +149,17 @@ class BangladeshModel(Model):
         self.space = None
         self.sources = []
         self.sinks = []
-        # self.G = nx.DiGraph()  # initialise network
 
         self.long_length_threshold = 200
         self.medium_length_threshold = 50
         self.short_length_threshold = 10
 
-        self.G = self.generate_network()
+        self.G = self.generate_network()  # generate network using networkx library
         self.generate_model()
 
-        self.driving_time_of_trucks = []
-        self.speed_of_trucks = []
-        self.collapsed_dict = {'A': 0, 'B': 0, 'C': 0, 'D': 0}
+        self.driving_time_of_trucks = []  # initialise list for driving time of trucks
+        self.speed_of_trucks = []  # initialise list for speed for trucks
+        self.collapsed_conditions_dict = {'A': 0, 'B': 0, 'C': 0, 'D': 0}
 
     def generate_network(self):
         """
@@ -175,7 +178,6 @@ class BangladeshModel(Model):
         df.rename(columns={'index': 'id'}, inplace=True)
         # retrieve all roads in dataset
         roads = df['road'].unique().tolist()
-        # initialize graph
         self.G = nx.DiGraph()
         # for each road in list roads
         for road in roads:
@@ -224,17 +226,17 @@ class BangladeshModel(Model):
                     # add intersected edge
                     self.G.add_edge(key_typ, row_index, distance=0)
 
-        # retrieve all the chainages
+        # retrieve the chainage of every node
         chainage = nx.get_node_attributes(self.G, 'km')
-        # for each set of edges
+        # for each edge pair
         for u, v in self.G.edges:
-            # if difference between node values equals 1
+            # if difference between node values equals one i.e. not an intersected edge
             if abs(v - u) == 1:
-                # compute distance based on difference in chainage
+                # compute the distance based on difference in chainage, take absolute value
                 distance = abs(chainage[v] - chainage[u])
-                # from meters to km
+                # multiply to retrieve kilometers rather than meters
                 distance *= 1000
-                # add as distance attribute to edge
+                # add to edge as distance attribute
                 self.G[u][v]['distance'] = distance
 
         # return network
@@ -333,10 +335,9 @@ class BangladeshModel(Model):
         model_metrics = {
                         "step": get_steps,
                         "avg_delay": get_avg_delay,
-                        "avg_waiting": get_avg_waiting,
                         "avg_driving_time": get_avg_driving,
                         "avg_speed": get_avg_speed,
-                        "tot_collapsed": get_tot_collapsed,
+                        "avg_collapsed": get_tot_collapsed,
                         "A_collapsed": get_A_collapsed,
                         "B_collapsed": get_B_collapsed,
                         "C_collapsed": get_C_collapsed,
@@ -365,32 +366,23 @@ class BangladeshModel(Model):
         """
         # call network
         network = self.G
-        # print("nodes in shortest path method:", network.nodes)
         # determine the sink to calculate the shortest path to
         while True:
             # different source and sink
             sink = self.random.choice(self.sinks)
-            #print("Sink: ", sink)
             if sink is not source:
                 break
         # the dictionary key is the origin, destination combination:
         key = source, sink
-        #print("Key: ", key)
         # first, check if there already is a shortest path:
         if key in self.shortest_path_dict.keys():
             return self.shortest_path_dict[key]
         else:
-            #print("If statement is accessed")
             # compute shortest path between origin and destination based on distance (which is weight)
             shortest_path = nx.shortest_path(network, source, sink, weight='distance')
+            # retrieve the length
             shortest_path_length = nx.shortest_path_length(network, source, sink, weight='distance')
-            # shortest_path_length = 0
-            # for index in range(len(shortest_path)-1):
-                # distance_between_nodes = network[shortest_path[index]][shortest_path[index+1]]['distance']
-                # shortest_path_length += distance_between_nodes
-                # print("node:", shortest_path[index], index, shortest_path[index+1], index+1, "distance:", distance_between_nodes)
-            #print("Shortest path: ", shortest_path)
-            # format shortest path in dictionary structure
+            # assign value to shortest path dictionary, which is a tuple of the path and length of the path
             self.shortest_path_dict[key] = shortest_path, shortest_path_length
             # print("path", shortest_path, "length:",shortest_path_length)
 

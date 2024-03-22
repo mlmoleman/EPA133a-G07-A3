@@ -1,6 +1,5 @@
 from mesa import Agent
 from enum import Enum
-import random
 
 
 # ---------------------------------------------------------------
@@ -16,8 +15,16 @@ class Infra(Agent):
 
     length : float
         the length in meters
-    ...
 
+    name : string
+        the name of the infrastructure
+
+    road name : string
+        the road name on which the infrastructure type is located
+
+    vehicle_count : int
+        the number of vehicles that are currently in/on (or totally generated/removed by)
+        this infrastructure component
     """
 
     def __init__(self, unique_id, model, length=0,
@@ -45,10 +52,14 @@ class Bridge(Infra):
     condition:
         condition of the bridge
 
+    collapse_chance:
+        dictionary consisting of the probability that a bridge with certain condition collapses
+
+    collapsed: bool
+        whether bridge is collapsed
+
     delay_time: int
         the delay (in ticks) caused by this bridge
-    ...
-
     """
 
     def __init__(self, unique_id, model, length=0,
@@ -58,13 +69,8 @@ class Bridge(Infra):
         self.condition = condition
         self.collapse_chance = self.model.collapse_dict[self.condition]
         self.collapsed = False
-        #self.in_repair = False
-
-        # TODO
         self.delay_time = 0
-        # print(self.delay_time)
 
-    # TODO
     def get_delay_time(self):
         if self.collapsed:
             if self.length > self.model.long_length_threshold:
@@ -79,26 +85,17 @@ class Bridge(Infra):
             self.delay_time = 0
         return self.delay_time
 
-    # def get_repair_time(self):
-    #     self.repair_time = 24 * 60
-    #     return self.repair_time
-
     def get_name(self):
         """
         Retrieve bridges name to choose between L/R bridge
         """
         return self.name
 
-    # def change_condition(self, new_condition: str):
-    #     """Change the condition of a bridge to another condition"""
-    #     self.condition = new_condition
-    #     return self.condition
-
     def collapse(self):
         """A bridge collapses according to its chance of collapsing."""
         if not self.collapsed and self.collapse_chance > self.random.random():
             self.collapsed = True
-            self.model.collapsed_dict[self.condition] += 1
+            self.model.collapsed_conditions_dict[self.condition] += 1
         else:
             pass
         return
@@ -106,6 +103,7 @@ class Bridge(Infra):
     def step(self):
         # first, the bridge has a chance to collapse. This is done in the collapse function.
         self.collapse()
+
 
 # ---------------------------------------------------------------
 class Link(Infra):
@@ -134,7 +132,6 @@ class Sink(Infra):
     def remove(self, vehicle):
         self.model.schedule.remove(vehicle)
         self.vehicle_removed_toggle = not self.vehicle_removed_toggle
-        #print(str(self) + ' REMOVE ' + str(vehicle))
 
 
 # ---------------------------------------------------------------
@@ -155,8 +152,6 @@ class Source(Infra):
 
     vehicle_generated_flag: bool
         True when a Truck is generated in this tick; False otherwise
-    ...
-
     """
 
     truck_counter = 0
@@ -181,7 +176,6 @@ class Source(Infra):
                 Source.truck_counter += 1
                 self.vehicle_count += 1
                 self.vehicle_generated_flag = True
-                #print(str(self) + " GENERATE " + str(agent))
         except Exception as e:
             print("Oops!", e.__class__, "occurred.")
 
@@ -193,7 +187,6 @@ class SourceSink(Source, Sink):
     """
 
     pass
-
 
 
 # ---------------------------------------------------------------
@@ -236,7 +229,11 @@ class Vehicle(Agent):
 
     removed_at_step: int
         the timestamp (number of ticks) that the vehicle is removed
-    ...
+
+    driving_time: float
+        the driving time on the road for a vehicle
+
+    travel_distance: float
 
     """
 
@@ -258,16 +255,14 @@ class Vehicle(Agent):
         self.location_offset = location_offset
         self.pos = generated_by.pos
         self.path_ids = path_ids
-        # default values
         self.state = Vehicle.State.DRIVE
         self.location_index = 0
         self.waiting_time = 0
         self.waited_at = None
         self.removed_at_step = None
-        # set an attribute 'next_infra_name' to distinguish the L and R bridge
-        self.next_infra_name = None
-        self.driving_time = 0
-        self.travel_distance = 0
+        self.next_infra_name = None  # set an attribute 'next_infra_name' to distinguish the L and R bridge
+        self.driving_time = 0  # driving time of vehicle with certain travel path
+        self.travel_distance = 0  # travel distance of path
 
     def __str__(self):
         return "Vehicle" + str(self.unique_id) + \
@@ -282,7 +277,7 @@ class Vehicle(Agent):
         random_route = self.model.get_route(self.generated_by.unique_id)
         self.path_ids = random_route[0]
         self.travel_distance = random_route[1]
-        # print("path:", self.path_ids, "distance", self.travel_distance)
+
     def step(self):
         """
         Vehicle waits or drives at each step
@@ -299,10 +294,9 @@ class Vehicle(Agent):
         """
         To print the vehicle trajectory at each step
         """
-        #print(self)
+        # print(self)
 
     def drive(self):
-
         # the distance that vehicle drives in a tick
         # speed is global now: can change to instance object when individual speed is needed
         distance = Vehicle.speed * Vehicle.step_time
@@ -327,12 +321,17 @@ class Vehicle(Agent):
         if isinstance(next_infra, Sink):
             # arrive at the sink
             self.arrive_at_next(next_infra, 0)
+            # retrieve the time step
             self.removed_at_step = self.model.schedule.steps
+            # compute the driving time, which equals the difference between the time step when generated and removed
             self.driving_time = self.removed_at_step - self.generated_at_step
-            self.net_speed = (self.travel_distance / 1000) / (self.driving_time / 60)
+            # add driving time to list of driving times for all trucks in model class
             self.model.driving_time_of_trucks.append(self.driving_time)
+            # compute the netto speed, depends on travel distance of path
+            self.net_speed = (self.travel_distance / 1000) / (self.driving_time / 60)
+            # add netto speed to list of speed for all trucks in model class
             self.model.speed_of_trucks.append(self.net_speed)
-            # print(self.net_speed, self.travel_distance, self.driving_time, self.generated_at_step, self.removed_at_step)
+            # remove vehicle from location
             self.location.remove(self)
             return
         elif isinstance(next_infra, Bridge):
