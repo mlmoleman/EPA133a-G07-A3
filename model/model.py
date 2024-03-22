@@ -129,13 +129,14 @@ class BangladeshModel(Model):
         self.space = None
         self.sources = []
         self.sinks = []
-        self.G = nx.DiGraph()  # initialise network
+        # self.G = nx.DiGraph()  # initialise network
 
         self.long_length_threshold = 200
         self.medium_length_threshold = 50
         self.short_length_threshold = 10
 
-        self.generate_network()
+
+        self.G = self.generate_network()
         self.generate_model()
 
         self.driving_time_of_trucks = []
@@ -158,6 +159,7 @@ class BangladeshModel(Model):
         df.rename(columns={'index': 'id'}, inplace=True)
         # retrieve all roads in dataset
         roads = df['road'].unique().tolist()
+        self.G = nx.DiGraph()
         # for each road in list roads
         for road in roads:
             road_subset = df[df['road'] == road]
@@ -344,7 +346,8 @@ class BangladeshModel(Model):
         and adds this path to path_ids_dict
         """
         # call network
-        network = self.generate_network()
+        network = self.G
+        # print("nodes in shortest path method:", network.nodes)
         # determine the sink to calculate the shortest path to
         while True:
             # different source and sink
@@ -363,13 +366,16 @@ class BangladeshModel(Model):
             # compute shortest path between origin and destination based on distance (which is weight)
             shortest_path = nx.shortest_path(network, source, sink, weight='distance')
             shortest_path_length = nx.shortest_path_length(network, source, sink, weight='distance')
-            #for index in range(len(shortest_path)-1):
-                #distance_between_nodes = network[shortest_path[index]][shortest_path[index+1]]['distance']
-                #shortest_path_length += distance_between_nodes
+            # shortest_path_length = 0
+            # for index in range(len(shortest_path)-1):
+                # distance_between_nodes = network[shortest_path[index]][shortest_path[index+1]]['distance']
+                # shortest_path_length += distance_between_nodes
                 # print("node:", shortest_path[index], index, shortest_path[index+1], index+1, "distance:", distance_between_nodes)
             #print("Shortest path: ", shortest_path)
             # format shortest path in dictionary structure
             self.shortest_path_dict[key] = shortest_path, shortest_path_length
+            print("path", shortest_path, "length:",shortest_path_length)
+
             return self.shortest_path_dict[key]
 
     def get_straight_route(self, source):
