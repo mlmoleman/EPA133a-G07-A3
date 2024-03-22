@@ -11,6 +11,8 @@ import os
 from shapely import buffer
 from shapely import wkt
 
+import matplotlib.lines as mlines
+
 os.environ['USE_PYGEOS'] = '0'
 warnings.filterwarnings("ignore")
 
@@ -33,9 +35,9 @@ df_primary = df[(df["type"] == "primary") | (df["type"] == "trunk")]
 # Gets the intersections that are calculated for the main model
 df_sections = pd.read_csv(main_folder_path + "/data/intersections_BONUS.csv")
 # Convert the geometry back into working shapely geometry
-df_sections["geometry"] = df_sections["0"].apply(wkt.loads)
+df_sections["geometry"] = df_sections["geometry"].apply(wkt.loads)
 # Turns the df into a gdf
-df_sections = gpd.GeoDataFrame(df_sections, geometry="geometry", crs="EPSG:4326").drop(columns="0")
+df_sections = gpd.GeoDataFrame(df_sections, geometry="geometry", crs="EPSG:4326")
 
 # Will contain buffered versions of the intersections
 points = []
@@ -138,15 +140,64 @@ for section in df_sections["geometry"]:
     # After looping over every combination, the pair with the smallest distance is added to the list
     final_pair.append(closest_point_pair)
 
-# Will contain the lengths that is between the intersection points from the csv data and the intersection points from the shapefile
+# Will contain the lengths that is between the intersection points
+# from the csv data and the intersection points from the shapefile
 dict_length = {}
 # Transformer that can convert to another crs
 transformer = Transformer.from_crs('EPSG:4326', 'EPSG:3857', always_xy=True)
 # Loops over the pairs
 for index, pair in enumerate(final_pair):
-    #Turns  the pair into a line
+    # Turns  the pair into a line
     line = LineString([pair[0], pair[1]])
     # Converts the line to crs that uses meters and then calculates the distance
     line_length = sp_ops.transform(transformer.transform, line).length
     # Add the distance with its road name to the dict
     dict_length[df_sections["Unnamed: 0"][index]] = line_length / 1000
+
+# Defines the grid in which the plots will be placed
+fig, ax = plt.subplots(3, 4, figsize=(10, 10))
+# Turn the 3x4 axis matris into a 1X12 one
+ax = ax.flatten()
+# Will contain the length between every pair of points
+dict_length = {}
+# Labels for the legend
+orginal = mlines.Line2D([], [], color='red', marker='s', ls='', label='Csv data')
+shapefile = mlines.Line2D([], [], color='blue', marker='D', ls='', label='Shapefile data')
+
+bar_index=[]
+# Loops over the pair
+for index, pair in enumerate(final_pair):
+    # Creates a linestring between the points in the pair
+    line = LineString([pair[0], pair[1]])
+    # Converse the crs to one with meters instead of lon,lat
+    line_length = sp_ops.transform(transformer.transform, line).length
+    print(line_length)
+    # Plots the points
+    gpd.GeoSeries(pair[0], crs="EPSG:4326").plot(ax=ax[index], color="red")
+    gpd.GeoSeries(pair[1], crs="EPSG:4326").plot(ax=ax[index], color="blue")
+    # Plots line between the points
+    gpd.GeoSeries(line, crs="EPSG:4326").plot(ax=ax[index], color="white")
+
+    # Plots an invicible circle around the points and line. This makes the size of the plot the same
+    gpd.GeoSeries(buffer(line.centroid, 0.03), crs="EPSG:4326").plot(ax=ax[index], color="pink", alpha=0)
+    # Adds a map to the plot
+    cx.add_basemap(ax=ax[index], crs="EPSG:4326", attribution_size=0)
+    # Adds a legend under the 9th plot
+    if index == 8:
+        ax[index].legend(handles=[orginal, shapefile], loc="lower center", bbox_to_anchor=(0.0, -0.4, 0.0, 0.0))
+    # Creates the title with the road name and distance
+    ax[index].title.set_text((df_sections["intersec_to"][index], f"{int(line_length)} m"))
+    # Puts the road with the length in the dict
+    bar_index.append(df_sections["intersec_to"][index])
+    dict_length[df_sections["intersec_to"][index]] = line_length / 1000
+plt.savefig(main_folder_path + "/img/bonus_pair.png")
+plt.show()
+
+# Creates a bar plot
+plt.bar(bar_index, dict_length.values(), color="red")
+# Create correct axis labels and title
+plt.xlabel("Road to which the N1 or N2 connects")
+plt.ylabel("Difference in kilometers")
+plt.title("Difference intersections shapefile and csv", fontsize=14)
+plt.savefig(main_folder_path + "/img/bonus_bar.png")
+plt.show()

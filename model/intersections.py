@@ -6,7 +6,8 @@ import shapely.ops as sp_ops
 import warnings
 from shapely import buffer
 import os
-
+from matplotlib import pyplot as plt
+import contextily as cx
 os.environ['USE_PYGEOS'] = '0'
 import geopandas as gpd
 
@@ -66,6 +67,7 @@ for index in gseries.index:
 # Selects the lines that intersect with the N1 and N2
 intersecting_N1 = gseries[gseries.index.isin(cross_index_N1)]
 intersecting_N2 = gseries[gseries.index.isin(cross_index_N2)]
+
 # Calculates the intersection points. N1 and N2 get dropped, because they intersect
 # with themselves and there is no need to examine an intersection with itself
 intersections_N1 = gseries["N1"].intersection(intersecting_N1).drop("N1")
@@ -213,3 +215,21 @@ df_intersections_all = pd.concat([df_intersections_main,
 # Saves the intersection data to a csv
 main_folder_path = os.path.normpath(os.getcwd() + os.sep + os.pardir)
 df_intersections_all.to_csv(main_folder_path + "/data/intersections.csv")
+df_intersections_main.to_csv(main_folder_path + "/data/intersections_BONUS.csv")
+
+# Creates a plot of the result
+fig, ax = plt.subplots(1,1,figsize=(10,10))
+# Plots the N1
+gpd.GeoSeries(gseries["N1"],crs=4326).plot(ax=ax,color="blue")
+df_intersections_main.plot(ax=ax,column="intersec_to")
+# Plots the N2
+gpd.GeoSeries(gseries["N2"],crs=4326).plot(ax=ax,color="white")
+# Plots the map
+cx.add_basemap(ax=ax,crs=4326)
+# Adds title
+ax.title.set_text("Roads intersecting with N1 and N2")
+# Merges the roads that intersect with N1 and N2 and plot those
+pd.concat([intersecting_N1,intersecting_N2]).reset_index().plot(ax=ax,column="index",legend=True)
+# Saves the image
+plt.savefig(main_folder_path + "/img/intersect_img.png")
+plt.show()
