@@ -36,46 +36,6 @@ def get_avg_driving(model):
         return 0
 
 
-def get_conditions(model) -> object:
-    """
-    Returns the frequency of conditions for each step
-    """
-    conditions = [a.condition for a in model.schedule.agents if isinstance(a, Bridge)]
-    freq_a = conditions.count('A')  # retrieve frequency of condition A in list of conditions per step
-    freq_b = conditions.count('B')  # retrieve frequency of condition B in list of conditions per step
-    freq_c = conditions.count('C')  # retrieve frequency of condition C in list of conditions per step
-    freq_d = conditions.count('D')  # retrieve frequency of condition D in list of conditions per step
-    return freq_a, freq_b, freq_c, freq_d  # return frequencies
-
-
-def get_condition_frequency_a(model):
-    """
-    Retrieve the frequency of condition A
-    """
-    return get_conditions(model)[0]
-
-
-def get_condition_frequency_b(model):
-    """
-    Retrieve the frequency of condition B
-    """
-    return get_conditions(model)[1]
-
-
-def get_condition_frequency_c(model):
-    """
-    Retrieve the frequency of condition C
-    """
-    return get_conditions(model)[2]
-
-
-def get_condition_frequency_d(model):
-    """
-    Retrieve the frequency of condition D
-    """
-    return get_conditions(model)[3]
-
-
 def set_lat_lon_bound(lat_min, lat_max, lon_min, lon_max, edge_ratio=0.02):
     """
     Set the HTML continuous space canvas bounding box (for visualization)
@@ -127,7 +87,7 @@ class BangladeshModel(Model):
     file_name = '../data/bridges_intersected_linked.csv'
 
     def __init__(self, seed=None, x_max=500, y_max=500, x_min=0, y_min=0,
-                 collapse_dict:defaultdict={'A': 0, 'B': 0, 'C': 0, 'D': 0}, routing_type: str = "shortest"):
+                 collapse_dict:defaultdict={'A': 0.10, 'B': 0.20, 'C': 0.30, 'D': 0.40}, routing_type: str = "shortest"):
 
         self.routing_type = routing_type
         self.collapse_dict = collapse_dict
@@ -316,6 +276,16 @@ class BangladeshModel(Model):
                     self.space.place_agent(agent, (x, y))
                     agent.pos = (x, y)
 
+        # define the model metrics we want to extract for each model run
+        model_metrics = {
+                        "step": get_steps,
+                        "avg_delay": get_avg_delay,
+                        "avg_driving_time": get_avg_driving
+                        }
+
+        # set up the data collector
+        self.datacollector = DataCollector(model_reporters=model_metrics)
+
     def get_random_route(self, source):
         """
         pick up a random route given an origin
@@ -377,7 +347,7 @@ class BangladeshModel(Model):
         """
         Advance the simulation by one step.
         """
-        # self.datacollector.collect(self)
+        self.datacollector.collect(self)
         self.schedule.step()
 
 # EOF -----------------------------------------------------------

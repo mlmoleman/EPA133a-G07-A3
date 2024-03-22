@@ -61,7 +61,7 @@ class Bridge(Infra):
         #self.in_repair = False
 
         # TODO
-        #self.delay_time = self.random.randrange(0, 10)
+        self.delay_time = 0
         # print(self.delay_time)
 
     # TODO
@@ -324,6 +324,8 @@ class Vehicle(Agent):
             # arrive at the sink
             self.arrive_at_next(next_infra, 0)
             self.removed_at_step = self.model.schedule.steps
+            self.driving_time = self.removed_at_step - self.generated_at_step
+            self.model.driving_time_of_trucks.append(self.driving_time)
             self.location.remove(self)
             return
         elif isinstance(next_infra, Bridge):
