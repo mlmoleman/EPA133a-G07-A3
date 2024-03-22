@@ -331,7 +331,7 @@ class Vehicle(Agent):
             bridge_name = next_infra.get_name()
             # Get location of current object
             prev_x_loc = self.location.pos[0]
-            # Get location of next object
+            # Get location of next objec
             next_x_loc = next_infra.pos[0]
             # Check if the bridge is L and if the next location is more east than the current location
             if bridge_name[-2:] == '(L' and prev_x_loc < next_x_loc:

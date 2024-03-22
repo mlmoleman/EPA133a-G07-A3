@@ -11,6 +11,8 @@ import matplotlib.pyplot as plt
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 # ---------------------------------------------------------------
+
+
 def get_steps(model):
     return model.schedule.steps
 
@@ -43,8 +45,7 @@ def get_conditions(model) -> object:
     freq_b = conditions.count('B')  # retrieve frequency of condition B in list of conditions per step
     freq_c = conditions.count('C')  # retrieve frequency of condition C in list of conditions per step
     freq_d = conditions.count('D')  # retrieve frequency of condition D in list of conditions per step
-    freq_x = conditions.count('X')  # retrieve frequency of condition X in list of conditions per step
-    return freq_a, freq_b, freq_c, freq_d, freq_x  # return frequencies
+    return freq_a, freq_b, freq_c, freq_d  # return frequencies
 
 
 def get_condition_frequency_a(model):
@@ -74,12 +75,6 @@ def get_condition_frequency_d(model):
     """
     return get_conditions(model)[3]
 
-
-def get_condition_frequency_x(model):
-    """
-    Retrieve the frequency of condition X
-    """
-    return get_conditions(model)[4]
 
 def set_lat_lon_bound(lat_min, lat_max, lon_min, lon_max, edge_ratio=0.02):
     """
@@ -131,7 +126,8 @@ class BangladeshModel(Model):
 
     file_name = '../data/bridges_intersected_linked.csv'
 
-    def __init__(self, seed=None, x_max=500, y_max=500, x_min=0, y_min=0, collapse_dict:defaultdict={'A': 0, 'B': 0, 'C': 0, 'D': 0}, routing_type: str = "shortest"):
+    def __init__(self, seed=None, x_max=500, y_max=500, x_min=0, y_min=0,
+                 collapse_dict:defaultdict={'A': 0, 'B': 0, 'C': 0, 'D': 0}, routing_type: str = "shortest"):
 
         self.routing_type = routing_type
         self.collapse_dict = collapse_dict
@@ -142,8 +138,7 @@ class BangladeshModel(Model):
         self.space = None
         self.sources = []
         self.sinks = []
-        self.G = nx.DiGraph() #initialise network
-
+        self.G = nx.DiGraph()  # initialise network
 
         self.long_length_threshold = 200
         self.medium_length_threshold = 50
@@ -231,8 +226,6 @@ class BangladeshModel(Model):
         # return network
         return self.G
 
-
-
     def generate_model(self):
         """
         generate the simulation model according to the csv file component information
@@ -240,8 +233,8 @@ class BangladeshModel(Model):
         Warning: the labels are the same as the csv column labels
 
         """
-        #TODO call generate_network method within generate_model method?
-        #TODO alter generate model method accordingly
+        # TODO call generate_network method within generate_model method?
+        # TODO alter generate model method accordingly
         df = pd.read_csv(self.file_name)
 
         # a list of names of roads to be generated
@@ -342,14 +335,14 @@ class BangladeshModel(Model):
         """
         # call network
         network = self.G
-        #determine the sink to calculate the shortest path to
+        # determine the sink to calculate the shortest path to
         while True:
             # different source and sink
             sink = self.random.choice(self.sinks)
             #print("Sink: ", sink)
             if sink is not source:
                 break
-        #the dictionary key is the origin, destination combination:
+        # the dictionary key is the origin, destination combination:
         key = source, sink
         #print("Key: ", key)
         # first, check if there already is a shortest path:
@@ -384,7 +377,7 @@ class BangladeshModel(Model):
         """
         Advance the simulation by one step.
         """
-        #self.datacollector.collect(self)
+        # self.datacollector.collect(self)
         self.schedule.step()
 
 # EOF -----------------------------------------------------------
