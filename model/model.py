@@ -59,28 +59,12 @@ def get_avg_speed(model):
         return 0
 
 
-def get_tot_collapsed(model):
+def get_avg_collapse(model):
     """
     Returns the average number of collapsed bridges per time step
     """
     collapsed = [a.collapsed for a in model.schedule.agents if isinstance(a, Bridge)]
     return collapsed.count(True)
-
-def get_A_collapsed(model):
-    condition = 'A'
-    return model.collapsed_dict[condition]
-
-def get_B_collapsed(model):
-    condition = 'B'
-    return model.collapsed_dict[condition]
-
-def get_C_collapsed(model):
-    condition = 'C'
-    return model.collapsed_dict[condition]
-
-def get_D_collapsed(model):
-    condition = 'D'
-    return model.collapsed_dict[condition]
 
 
 def set_lat_lon_bound(lat_min, lat_max, lon_min, lon_max, edge_ratio=0.02):
@@ -134,7 +118,7 @@ class BangladeshModel(Model):
     file_name = '../data/bridges_intersected_linked.csv'
 
     def __init__(self, seed=None, x_max=500, y_max=500, x_min=0, y_min=0,
-                 collapse_dict:defaultdict={'A': 0.05, 'B': 0.1, 'C': 0.2, 'D': 0.4}, routing_type: str = "shortest"):
+                 collapse_dict:defaultdict={'A': 0.0, 'B': 0.0, 'C': 0.0, 'D': 0.8}, routing_type: str = "shortest"):
 
         self.routing_type = routing_type
         self.collapse_dict = collapse_dict
@@ -151,12 +135,12 @@ class BangladeshModel(Model):
         self.medium_length_threshold = 50
         self.short_length_threshold = 10
 
+
         self.G = self.generate_network()
         self.generate_model()
 
         self.driving_time_of_trucks = []
         self.speed_of_trucks = []
-        self.collapsed_dict = {'A': 0, 'B': 0, 'C': 0, 'D': 0}
 
     def generate_network(self):
         """
@@ -175,7 +159,6 @@ class BangladeshModel(Model):
         df.rename(columns={'index': 'id'}, inplace=True)
         # retrieve all roads in dataset
         roads = df['road'].unique().tolist()
-        # initialize graph
         self.G = nx.DiGraph()
         # for each road in list roads
         for road in roads:
@@ -224,17 +207,19 @@ class BangladeshModel(Model):
                     # add intersected edge
                     self.G.add_edge(key_typ, row_index, distance=0)
 
-        # retrieve all the chainages
         chainage = nx.get_node_attributes(self.G, 'km')
-        # for each set of edges
         for u, v in self.G.edges:
-            # if difference between node values equals 1
             if abs(v - u) == 1:
-                # compute distance based on difference in chainage
                 distance = abs(chainage[v] - chainage[u])
-                # from meters to km
                 distance *= 1000
-                # add as distance attribute to edge
+
+
+
+                # obtain distance between nodes
+                # distance = abs((1000 * df.iloc[u, df.columns.get_indexer(['km'])].values) -
+                               # (1000 * df.iloc[v, df.columns.get_indexer(['km'])].values))
+                # assign distance as weight to edge
+                # print("node 1:", u, "node2:", v, "distance", distance)
                 self.G[u][v]['distance'] = distance
 
         # return network
@@ -247,7 +232,8 @@ class BangladeshModel(Model):
         Warning: the labels are the same as the csv column labels
 
         """
-        # import data
+        # TODO call generate_network method within generate_model method?
+        # TODO alter generate model method accordingly
         df = pd.read_csv(self.file_name)
 
         # a list of names of roads to be generated
@@ -336,11 +322,7 @@ class BangladeshModel(Model):
                         "avg_waiting": get_avg_waiting,
                         "avg_driving_time": get_avg_driving,
                         "avg_speed": get_avg_speed,
-                        "tot_collapsed": get_tot_collapsed,
-                        "A_collapsed": get_A_collapsed,
-                        "B_collapsed": get_B_collapsed,
-                        "C_collapsed": get_C_collapsed,
-                        "D_collapsed": get_D_collapsed
+                        "avg_collapsed": get_avg_collapse
                         }
 
         # set up the data collector
