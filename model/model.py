@@ -47,6 +47,8 @@ def get_avg_collapse(model):
     """
     Returns the average number of collapsed bridges per time step
     """
+    collapsed = [a.collapsed for a in model.schedule.agents if isinstance(a, Bridge)]
+    return collapsed.count(True)
 
 
 def set_lat_lon_bound(lat_min, lat_max, lon_min, lon_max, edge_ratio=0.02):
@@ -293,7 +295,9 @@ class BangladeshModel(Model):
         model_metrics = {
                         "step": get_steps,
                         "avg_delay": get_avg_delay,
-                        "avg_driving_time": get_avg_driving
+                        "avg_waiting": get_avg_waiting,
+                        "avg_driving_time": get_avg_driving,
+                        "avg_collapsed":get_avg_collapse
                         }
 
         # set up the data collector
