@@ -125,7 +125,12 @@ The model folder contains all the code files required to run the model and shoul
         ├── model_batch.py
         ├── model_run.py
         └── model_viz.py
+
+The notebook folder includes the jupyter notebook which visualises the experimental outcomes. 
+
+    notebook/
         └── visualisation.py
+
 
 Lastly, the report folder contains the report that provides detailed information on the analysis conducted for the Bangladesh case. 
 
@@ -134,7 +139,8 @@ Lastly, the report folder contains the report that provides detailed information
 
 ### Usage
 
-If the file structuring is similar to the one given above the model_batch.py, model_run.py and model_viz.py files are enough to access all the functionalities of the project code. The "Purpose code files" define what the files do. If one wants to clean the raw Bangladesh bridge data the data.py file can be used. Lastly, the links.py can be used to create the bridges_cleaned_linked.csv dataset. This however only adds value to the model and is quite redundant if the goal is to see how the clean datasets look.
+If the file structuring is similar to the one given above the model_batch.py, model_run.py and model_viz.py files are enough to access all the functionalities of the project code. The "Purpose code files" define what the files do. If one wants to clean the raw Bangladesh bridge data the data_bridges.py file can be used. Afterwards, intersections can be retrieved using the intersections.py file. The data_alignment.py file aligns the cleaned bridges with intersections. The links.py can be used to create the bridges_intersected_linked.csv dataset. Lastly, the bonus_assignment.py includes the bonus assignment for this project.
+
 
 ### Assistance during code creation
 
