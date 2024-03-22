@@ -17,7 +17,7 @@ warnings.filterwarnings("ignore")
 # Gets the path to the main folder
 main_folder_path = os.path.normpath(os.getcwd() + os.sep + os.pardir)
 # Reads the road data
-df = gpd.read_file(main_folder_path + "\data\gis\osm\\roads.shp")
+df = gpd.read_file(main_folder_path + "/data/gis/osm/roads.shp")
 # Selects all the unique values in the ref column
 road_names = df[df["ref"].notnull()]["ref"].unique()
 # Select the rows that start with an N, indicating the N roads
@@ -31,7 +31,7 @@ df_N["ref"] = df_N["ref"].str.replace(" ", "")
 # Creates a dataframe that contains the road sections for the N1 and N2
 df_primary = df[(df["type"] == "primary") | (df["type"] == "trunk")]
 # Gets the intersections that are calculated for the main model
-df_sections = pd.read_csv(main_folder_path + "\\data\\intersections_BONUS.csv")
+df_sections = pd.read_csv(main_folder_path + "/data/intersections_BONUS.csv")
 # Convert the geometry back into working shapely geometry
 df_sections["geometry"] = df_sections["0"].apply(wkt.loads)
 # Turns the df into a gdf
@@ -51,7 +51,7 @@ df_primary["ref"] = df_primary["ref"].str.replace(" ", "")
 df_N1N2 = df_primary[(df_primary["ref"] == "N1") | (df_primary["ref"] == "N2")]
 
 # Loads in the road data and turns it into a geopandas dataframe
-df_normal_data = pd.read_csv(main_folder_path + "\\data\\_roads3.csv")
+df_normal_data = pd.read_csv(main_folder_path + "/data/_roads3.csv")
 gdf_normal = gpd.GeoDataFrame(df_normal_data, geometry=gpd.points_from_xy(df_normal_data.lon, df_normal_data.lat),
                               crs="EPSG:4326")
 
