@@ -22,7 +22,10 @@ def get_avg_delay(model):
     Returns the average delay time per bridge
     """
     delays = [a.delay_time for a in model.schedule.agents if isinstance(a, Bridge)]
-    return mean(delays)
+    if len(delays) > 0:
+        return mean(delays)
+    else:
+        return 0
 
 
 def get_avg_waiting(model):
@@ -30,15 +33,28 @@ def get_avg_waiting(model):
     Returns the average waiting time per vehicle
     """
     waitings = [a.waiting_time for a in model.schedule.agents if isinstance(a, Vehicle)]
-    return mean(waitings)
+    if len(waitings) > 0:
+        return mean(waitings)
+    else:
+        return 0
 
 
 def get_avg_driving(model):
     """
-    Returns the average driving time of vehicles on road N1
+    Returns the average driving time of vehicles on roads
     """
     if len(model.driving_time_of_trucks) > 0:
         return sum(model.driving_time_of_trucks) / len(model.driving_time_of_trucks)
+    else:
+        return 0
+
+
+def get_avg_speed(model):
+    """
+    Returns the average speed of vehicles on roads
+    """
+    if len(model.speed_of_trucks) > 0:
+        return sum(model.speed_of_trucks) / len(model.speed_of_trucks)
     else:
         return 0
 
@@ -122,6 +138,7 @@ class BangladeshModel(Model):
         self.generate_model()
 
         self.driving_time_of_trucks = []
+        self.speed_of_trucks = []
 
     def generate_network(self):
         """
@@ -186,17 +203,16 @@ class BangladeshModel(Model):
                 # assign intersected edge to variable
                 if (key_typ, row_index) not in self.G.edges:
                     # add intersected edge
-                    self.G.add_edge(key_typ, row_index, weight=0)
+                    self.G.add_edge(key_typ, row_index, distance=0)
 
         for u, v in self.G.edges:
             if abs(v - u) == 1:
                 # obtain distance between nodes
-                distance = abs((df.iloc[u, df.columns.get_indexer(['km'])].values) -
-                               (df.iloc[v, df.columns.get_indexer(['km'])].values))
-                # from kilometers to meters
-                distance = distance * 1000
+                distance = abs((1000 * df.iloc[u, df.columns.get_indexer(['km'])].values) -
+                               (1000 * df.iloc[v, df.columns.get_indexer(['km'])].values))
                 # assign distance as weight to edge
-                self.G[u][v]['weight'] = distance
+                # print("node 1:", u, "node2:", v, "distance", distance)
+                self.G[u][v]['distance'] = distance
 
         # return network
         return self.G
@@ -297,6 +313,7 @@ class BangladeshModel(Model):
                         "avg_delay": get_avg_delay,
                         "avg_waiting": get_avg_waiting,
                         "avg_driving_time": get_avg_driving,
+                        "avg_speed": get_avg_speed,
                         "avg_collapsed":get_avg_collapse
                         }
 
@@ -338,10 +355,15 @@ class BangladeshModel(Model):
         else:
             #print("If statement is accessed")
             # compute shortest path between origin and destination based on distance (which is weight)
-            shortest_path = nx.shortest_path(network, source, sink, weight='weight')
+            shortest_path = nx.shortest_path(network, source, sink, weight='distance')
+            shortest_path_length = 0
+            for index in range(len(shortest_path)-1):
+                distance_between_nodes = network[shortest_path[index]][shortest_path[index+1]]['distance']
+                shortest_path_length += distance_between_nodes
+                print("node:", index, index+1, "distance:", distance_between_nodes)
             #print("Shortest path: ", shortest_path)
             # format shortest path in dictionary structure
-            self.shortest_path_dict[key] = shortest_path
+            self.shortest_path_dict[key] = shortest_path, shortest_path_length
             return self.shortest_path_dict[key]
 
     def get_straight_route(self, source):
