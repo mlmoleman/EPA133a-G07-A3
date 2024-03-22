@@ -1,11 +1,11 @@
 import pandas as pd
-import numpy as np
 
 # Retrieve the Bridge dataframe
 df = pd.read_csv('../data/bridges_intersected.csv')
 
 # Create a list of the indexes
 index = df.index
+
 
 def create_links(df, indexes):
     # Create an empty dictionary
@@ -26,27 +26,36 @@ def create_links(df, indexes):
         type_prev_obj = df.iloc[i-1, df.columns.get_indexer(['type'])].values
         # Check if the lat and lon of this object and the previous object and are not the same
         # AND if the type of this object and the previous object are not both equal to 'sourcesink'
-        if not (lat == lat_prev and lon == lon_prev) and not type_obj == type_prev_obj == 'sourcesink' and not (type_prev_obj == 'sourcesink' and type_obj == 'intersection'):
+        if (not (lat == lat_prev and lon == lon_prev) and not type_obj == type_prev_obj == 'sourcesink'
+                and not (type_prev_obj == 'sourcesink' and type_obj == 'intersection')):
             # if that is the case insert link
             # determine the length of the link by calculating the difference in km of the objects
             # and substracting half of the length of the objects.
-            length = abs((1000*df.iloc[i, df.columns.get_indexer(['km'])].values
-                      - 1000*df.iloc[i-1, df.columns.get_indexer(['km'])].values
-                      - 0.5*df.iloc[i, df.columns.get_indexer(['length'])].values
-                      - 0.5*df.iloc[i-1, df.columns.get_indexer(['length'])].values))
+            length = abs((1000*df.iloc[i, df.columns.get_indexer(['km'])].values -
+                          1000*df.iloc[i-1, df.columns.get_indexer(['km'])].values -
+                          0.5*df.iloc[i, df.columns.get_indexer(['length'])].values -
+                          0.5*df.iloc[i-1, df.columns.get_indexer(['length'])].values))
             # Determine the road to which the link belongs
             road = df.iloc[i, df.columns.get_indexer(['road'])].values[0]
             # Calculate the km of the link by taking the average
-            km = (df.iloc[i, df.columns.get_indexer(['km'])].values[0]+df.iloc[i-1, df.columns.get_indexer(['km'])].values[0])/2
+            km = (df.iloc[i, df.columns.get_indexer(['km'])].values[0] +
+                  df.iloc[i-1, df.columns.get_indexer(['km'])].values[0])/2
             # Calculate the latitude of the link by interpolating
-            lat = (df.iloc[i, df.columns.get_indexer(['lat'])].values[0]+df.iloc[i-1, df.columns.get_indexer(['lat'])].values[0])/2
+            lat = (df.iloc[i, df.columns.get_indexer(['lat'])].values[0] +
+                   df.iloc[i-1, df.columns.get_indexer(['lat'])].values[0])/2
             # Calculate the longitude of the link by interpolating
-            lon = (df.iloc[i, df.columns.get_indexer(['lon'])].values[0]+df.iloc[i-1, df.columns.get_indexer(['lon'])].values[0])/2
+            lon = (df.iloc[i, df.columns.get_indexer(['lon'])].values[0] +
+                   df.iloc[i-1, df.columns.get_indexer(['lon'])].values[0])/2
             # Add the link to the dictionary with the necessary attributes
-            inserting_links[i] = {'road': [road], 'km': [km], 'type': ['link'], 'name': ['link'], 'length': [round(length[0])], 'condition': None, 'lat': [lat], 'lon': [lon], 'model_type': ['link']}
+            inserting_links[i] = {'road': [road], 'km': [km], 'type': ['link'], 'name': ['link'],
+                                  'length': [round(length[0])], 'condition': None, 'lat': [lat], 'lon': [lon],
+                                  'model_type': ['link']}
     return inserting_links
 
+
 dict_links = create_links(df, index)
+
+
 #%%
 # Create a function to insert the links into the main dataframe
 def insert_links(df, dict_links):
@@ -68,6 +77,7 @@ def insert_links(df, dict_links):
     main_df = main_df.reset_index(drop=True)
     # Return the dataframe
     return main_df
+
 
 # Call the function to check the outcome
 main_df = insert_links(df, dict_links)
