@@ -322,7 +322,7 @@ class BangladeshModel(Model):
                         "avg_waiting": get_avg_waiting,
                         "avg_driving_time": get_avg_driving,
                         "avg_speed": get_avg_speed,
-                        "avg_collapsed":get_avg_collapse
+                        "avg_collapsed": get_avg_collapse
                         }
 
         # set up the data collector
@@ -374,7 +374,7 @@ class BangladeshModel(Model):
             #print("Shortest path: ", shortest_path)
             # format shortest path in dictionary structure
             self.shortest_path_dict[key] = shortest_path, shortest_path_length
-            print("path", shortest_path, "length:",shortest_path_length)
+            # print("path", shortest_path, "length:",shortest_path_length)
 
             return self.shortest_path_dict[key]
 
