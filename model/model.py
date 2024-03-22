@@ -19,61 +19,52 @@ def get_steps(model):
 
 def get_avg_delay(model):
     """
-    Returns the average delay time
+    Returns the average delay time per bridge
     """
     delays = [a.delay_time for a in model.schedule.agents if isinstance(a, Bridge)]
-    return mean(delays)
+    if len(delays) > 0:
+        return mean(delays)
+    else:
+        return 0
+
+
+def get_avg_waiting(model):
+    """
+    Returns the average waiting time per vehicle
+    """
+    waitings = [a.waiting_time for a in model.schedule.agents if isinstance(a, Vehicle)]
+    if len(waitings) > 0:
+        return mean(waitings)
+    else:
+        return 0
 
 
 def get_avg_driving(model):
     """
-    Returns the average driving time of vehicles on road N1
+    Returns the average driving time of vehicles on roads
     """
-
     if len(model.driving_time_of_trucks) > 0:
         return sum(model.driving_time_of_trucks) / len(model.driving_time_of_trucks)
     else:
         return 0
 
 
-def get_conditions(model) -> object:
+def get_avg_speed(model):
     """
-    Returns the frequency of conditions for each step
+    Returns the average speed of vehicles on roads
     """
-    conditions = [a.condition for a in model.schedule.agents if isinstance(a, Bridge)]
-    freq_a = conditions.count('A')  # retrieve frequency of condition A in list of conditions per step
-    freq_b = conditions.count('B')  # retrieve frequency of condition B in list of conditions per step
-    freq_c = conditions.count('C')  # retrieve frequency of condition C in list of conditions per step
-    freq_d = conditions.count('D')  # retrieve frequency of condition D in list of conditions per step
-    return freq_a, freq_b, freq_c, freq_d  # return frequencies
+    if len(model.speed_of_trucks) > 0:
+        return sum(model.speed_of_trucks) / len(model.speed_of_trucks)
+    else:
+        return 0
 
 
-def get_condition_frequency_a(model):
+def get_avg_collapse(model):
     """
-    Retrieve the frequency of condition A
+    Returns the average number of collapsed bridges per time step
     """
-    return get_conditions(model)[0]
-
-
-def get_condition_frequency_b(model):
-    """
-    Retrieve the frequency of condition B
-    """
-    return get_conditions(model)[1]
-
-
-def get_condition_frequency_c(model):
-    """
-    Retrieve the frequency of condition C
-    """
-    return get_conditions(model)[2]
-
-
-def get_condition_frequency_d(model):
-    """
-    Retrieve the frequency of condition D
-    """
-    return get_conditions(model)[3]
+    collapsed = [a.collapsed for a in model.schedule.agents if isinstance(a, Bridge)]
+    return collapsed.count(True)
 
 
 def set_lat_lon_bound(lat_min, lat_max, lon_min, lon_max, edge_ratio=0.02):
@@ -127,7 +118,7 @@ class BangladeshModel(Model):
     file_name = '../data/bridges_intersected_linked.csv'
 
     def __init__(self, seed=None, x_max=500, y_max=500, x_min=0, y_min=0,
-                 collapse_dict:defaultdict={'A': 0, 'B': 0, 'C': 0, 'D': 0}, routing_type: str = "shortest"):
+                 collapse_dict:defaultdict={'A': 0.0, 'B': 0.0, 'C': 0.0, 'D': 0.0}, routing_type: str = "shortest"):
 
         self.routing_type = routing_type
         self.collapse_dict = collapse_dict
@@ -147,6 +138,7 @@ class BangladeshModel(Model):
         self.generate_model()
 
         self.driving_time_of_trucks = []
+        self.speed_of_trucks = []
 
     def generate_network(self):
         """
@@ -211,17 +203,16 @@ class BangladeshModel(Model):
                 # assign intersected edge to variable
                 if (key_typ, row_index) not in self.G.edges:
                     # add intersected edge
-                    self.G.add_edge(key_typ, row_index, weight=0)
+                    self.G.add_edge(key_typ, row_index, distance=0)
 
         for u, v in self.G.edges:
             if abs(v - u) == 1:
                 # obtain distance between nodes
-                distance = abs((df.iloc[u, df.columns.get_indexer(['km'])].values) -
-                               (df.iloc[v, df.columns.get_indexer(['km'])].values))
-                # from kilometers to meters
-                distance = distance * 1000
+                distance = abs((1000 * df.iloc[u, df.columns.get_indexer(['km'])].values) -
+                               (1000 * df.iloc[v, df.columns.get_indexer(['km'])].values))
                 # assign distance as weight to edge
-                self.G[u][v]['weight'] = distance
+                # print("node 1:", u, "node2:", v, "distance", distance)
+                self.G[u][v]['distance'] = distance
 
         # return network
         return self.G
@@ -314,6 +305,19 @@ class BangladeshModel(Model):
                     self.space.place_agent(agent, (x, y))
                     agent.pos = (x, y)
 
+        # define the model metrics we want to extract for each model run
+        model_metrics = {
+                        "step": get_steps,
+                        "avg_delay": get_avg_delay,
+                        "avg_waiting": get_avg_waiting,
+                        "avg_driving_time": get_avg_driving,
+                        "avg_speed": get_avg_speed,
+                        "avg_collapsed":get_avg_collapse
+                        }
+
+        # set up the data collector
+        self.datacollector = DataCollector(model_reporters=model_metrics)
+
     def get_random_route(self, source):
         """
         pick up a random route given an origin
@@ -349,10 +353,15 @@ class BangladeshModel(Model):
         else:
             #print("If statement is accessed")
             # compute shortest path between origin and destination based on distance (which is weight)
-            shortest_path = nx.shortest_path(network, source, sink, weight='weight')
+            shortest_path = nx.shortest_path(network, source, sink, weight='distance')
+            shortest_path_length = 0
+            for index in range(len(shortest_path)-1):
+                distance_between_nodes = network[shortest_path[index]][shortest_path[index+1]]['distance']
+                shortest_path_length += distance_between_nodes
+                print("node:", index, index+1, "distance:", distance_between_nodes)
             #print("Shortest path: ", shortest_path)
             # format shortest path in dictionary structure
-            self.shortest_path_dict[key] = shortest_path
+            self.shortest_path_dict[key] = shortest_path, shortest_path_length
             return self.shortest_path_dict[key]
 
     def get_straight_route(self, source):
@@ -375,7 +384,7 @@ class BangladeshModel(Model):
         """
         Advance the simulation by one step.
         """
-        # self.datacollector.collect(self)
+        self.datacollector.collect(self)
         self.schedule.step()
 
 # EOF -----------------------------------------------------------
