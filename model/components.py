@@ -266,6 +266,7 @@ class Vehicle(Agent):
         # set an attribute 'next_infra_name' to distinguish the L and R bridge
         self.next_infra_name = None
         self.driving_time = 0
+        self.travel_distance = 0
 
     def __str__(self):
         return "Vehicle" + str(self.unique_id) + \
@@ -277,8 +278,10 @@ class Vehicle(Agent):
         """
         Set the origin destination path of the vehicle
         """
-        self.path_ids = self.model.get_route(self.generated_by.unique_id)
-
+        random_route = self.model.get_route(self.generated_by.unique_id)
+        self.path_ids = random_route[0]
+        self.travel_distance = random_route[1]
+        # print("path:", self.path_ids, "distance", self.travel_distance)
     def step(self):
         """
         Vehicle waits or drives at each step
@@ -325,7 +328,10 @@ class Vehicle(Agent):
             self.arrive_at_next(next_infra, 0)
             self.removed_at_step = self.model.schedule.steps
             self.driving_time = self.removed_at_step - self.generated_at_step
+            self.net_speed = (self.travel_distance / 1000) / (self.driving_time / 60)
             self.model.driving_time_of_trucks.append(self.driving_time)
+            self.model.speed_of_trucks.append(self.net_speed)
+            # print(self.net_speed, self.travel_distance, self.driving_time, self.generated_at_step, self.removed_at_step)
             self.location.remove(self)
             return
         elif isinstance(next_infra, Bridge):

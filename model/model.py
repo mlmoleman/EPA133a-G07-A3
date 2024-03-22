@@ -22,7 +22,10 @@ def get_avg_delay(model):
     Returns the average delay time per bridge
     """
     delays = [a.delay_time for a in model.schedule.agents if isinstance(a, Bridge)]
-    return mean(delays)
+    if len(delays) > 0:
+        return mean(delays)
+    else:
+        return 0
 
 
 def get_avg_waiting(model):
@@ -30,15 +33,28 @@ def get_avg_waiting(model):
     Returns the average waiting time per vehicle
     """
     waitings = [a.waiting_time for a in model.schedule.agents if isinstance(a, Vehicle)]
-    return mean(waitings)
+    if len(waitings) > 0:
+        return mean(waitings)
+    else:
+        return 0
 
 
 def get_avg_driving(model):
     """
-    Returns the average driving time of vehicles on road N1
+    Returns the average driving time of vehicles on roads
     """
     if len(model.driving_time_of_trucks) > 0:
         return sum(model.driving_time_of_trucks) / len(model.driving_time_of_trucks)
+    else:
+        return 0
+
+
+def get_avg_speed(model):
+    """
+    Returns the average speed of vehicles on roads
+    """
+    if len(model.speed_of_trucks) > 0:
+        return sum(model.speed_of_trucks) / len(model.speed_of_trucks)
     else:
         return 0
 
@@ -102,7 +118,7 @@ class BangladeshModel(Model):
     file_name = '../data/bridges_intersected_linked.csv'
 
     def __init__(self, seed=None, x_max=500, y_max=500, x_min=0, y_min=0,
-                 collapse_dict:defaultdict={'A': 0.0, 'B': 0.0, 'C': 0.0, 'D': 0.0}, routing_type: str = "shortest"):
+                 collapse_dict:defaultdict={'A': 0.0, 'B': 0.0, 'C': 0.0, 'D': 0.8}, routing_type: str = "shortest"):
 
         self.routing_type = routing_type
         self.collapse_dict = collapse_dict
@@ -113,15 +129,18 @@ class BangladeshModel(Model):
         self.space = None
         self.sources = []
         self.sinks = []
-        self.G = nx.DiGraph()  # initialise network
+        # self.G = nx.DiGraph()  # initialise network
 
         self.long_length_threshold = 200
         self.medium_length_threshold = 50
         self.short_length_threshold = 10
-        self.generate_network()
+
+
+        self.G = self.generate_network()
         self.generate_model()
 
         self.driving_time_of_trucks = []
+        self.speed_of_trucks = []
 
     def generate_network(self):
         """
@@ -140,14 +159,14 @@ class BangladeshModel(Model):
         df.rename(columns={'index': 'id'}, inplace=True)
         # retrieve all roads in dataset
         roads = df['road'].unique().tolist()
-        # initialize graph
         self.G = nx.DiGraph()
         # for each road in list roads
         for road in roads:
             road_subset = df[df['road'] == road]
             for index, row in df.iterrows():
                 self.G.add_node(row['id'], pos=(row['lat'], row['lon']), len=row['length'],
-                                typ=row['model_type'], road=row['road'], intersec=row['intersec_to'])
+                                typ=row['model_type'], road=row['road'], intersec=row['intersec_to'],
+                                km=row['km'])
             # retrieve all edges between bridges for one road
             edges = [(index, index + 1) for index, row in road_subset.iterrows()]
             # remove last one, which is out of bound
@@ -161,7 +180,7 @@ class BangladeshModel(Model):
             # add all edges
             self.G.add_edges_from(edges)
 
-            # get model type of all nodes
+        # get model type of all nodes
         typ = nx.get_node_attributes(self.G, 'typ')
         # get road which is intersected with N1 or N2
         intersec_to = nx.get_node_attributes(self.G, 'intersec')
@@ -186,17 +205,22 @@ class BangladeshModel(Model):
                 # assign intersected edge to variable
                 if (key_typ, row_index) not in self.G.edges:
                     # add intersected edge
-                    self.G.add_edge(key_typ, row_index, weight=0)
+                    self.G.add_edge(key_typ, row_index, distance=0)
 
+        chainage = nx.get_node_attributes(self.G, 'km')
         for u, v in self.G.edges:
             if abs(v - u) == 1:
+                distance = abs(chainage[v] - chainage[u])
+                distance *= 1000
+
+
+
                 # obtain distance between nodes
-                distance = abs((df.iloc[u, df.columns.get_indexer(['km'])].values) -
-                               (df.iloc[v, df.columns.get_indexer(['km'])].values))
-                # from kilometers to meters
-                distance = distance * 1000
+                # distance = abs((1000 * df.iloc[u, df.columns.get_indexer(['km'])].values) -
+                               # (1000 * df.iloc[v, df.columns.get_indexer(['km'])].values))
                 # assign distance as weight to edge
-                self.G[u][v]['weight'] = distance
+                # print("node 1:", u, "node2:", v, "distance", distance)
+                self.G[u][v]['distance'] = distance
 
         # return network
         return self.G
@@ -297,7 +321,8 @@ class BangladeshModel(Model):
                         "avg_delay": get_avg_delay,
                         "avg_waiting": get_avg_waiting,
                         "avg_driving_time": get_avg_driving,
-                        "avg_collapsed":get_avg_collapse
+                        "avg_speed": get_avg_speed,
+                        "avg_collapsed": get_avg_collapse
                         }
 
         # set up the data collector
@@ -322,6 +347,7 @@ class BangladeshModel(Model):
         """
         # call network
         network = self.G
+        # print("nodes in shortest path method:", network.nodes)
         # determine the sink to calculate the shortest path to
         while True:
             # different source and sink
@@ -338,10 +364,18 @@ class BangladeshModel(Model):
         else:
             #print("If statement is accessed")
             # compute shortest path between origin and destination based on distance (which is weight)
-            shortest_path = nx.shortest_path(network, source, sink, weight='weight')
+            shortest_path = nx.shortest_path(network, source, sink, weight='distance')
+            shortest_path_length = nx.shortest_path_length(network, source, sink, weight='distance')
+            # shortest_path_length = 0
+            # for index in range(len(shortest_path)-1):
+                # distance_between_nodes = network[shortest_path[index]][shortest_path[index+1]]['distance']
+                # shortest_path_length += distance_between_nodes
+                # print("node:", shortest_path[index], index, shortest_path[index+1], index+1, "distance:", distance_between_nodes)
             #print("Shortest path: ", shortest_path)
             # format shortest path in dictionary structure
-            self.shortest_path_dict[key] = shortest_path
+            self.shortest_path_dict[key] = shortest_path, shortest_path_length
+            # print("path", shortest_path, "length:",shortest_path_length)
+
             return self.shortest_path_dict[key]
 
     def get_straight_route(self, source):
