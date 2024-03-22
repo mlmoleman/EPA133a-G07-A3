@@ -233,8 +233,6 @@ class BangladeshModel(Model):
         Warning: the labels are the same as the csv column labels
 
         """
-        # TODO call generate_network method within generate_model method?
-        # TODO alter generate model method accordingly
         df = pd.read_csv(self.file_name)
 
         # a list of names of roads to be generated
