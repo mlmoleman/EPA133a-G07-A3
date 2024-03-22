@@ -61,7 +61,7 @@ class Bridge(Infra):
         #self.in_repair = False
 
         # TODO
-        #self.delay_time = self.random.randrange(0, 10)
+        self.delay_time = 0
         # print(self.delay_time)
 
     # TODO
@@ -133,7 +133,7 @@ class Sink(Infra):
     def remove(self, vehicle):
         self.model.schedule.remove(vehicle)
         self.vehicle_removed_toggle = not self.vehicle_removed_toggle
-        print(str(self) + ' REMOVE ' + str(vehicle))
+        #print(str(self) + ' REMOVE ' + str(vehicle))
 
 
 # ---------------------------------------------------------------
@@ -180,7 +180,7 @@ class Source(Infra):
                 Source.truck_counter += 1
                 self.vehicle_count += 1
                 self.vehicle_generated_flag = True
-                print(str(self) + " GENERATE " + str(agent))
+                #print(str(self) + " GENERATE " + str(agent))
         except Exception as e:
             print("Oops!", e.__class__, "occurred.")
 
@@ -295,7 +295,7 @@ class Vehicle(Agent):
         """
         To print the vehicle trajectory at each step
         """
-        print(self)
+        #print(self)
 
     def drive(self):
 
@@ -324,6 +324,8 @@ class Vehicle(Agent):
             # arrive at the sink
             self.arrive_at_next(next_infra, 0)
             self.removed_at_step = self.model.schedule.steps
+            self.driving_time = self.removed_at_step - self.generated_at_step
+            self.model.driving_time_of_trucks.append(self.driving_time)
             self.location.remove(self)
             return
         elif isinstance(next_infra, Bridge):
@@ -331,7 +333,7 @@ class Vehicle(Agent):
             bridge_name = next_infra.get_name()
             # Get location of current object
             prev_x_loc = self.location.pos[0]
-            # Get location of next object
+            # Get location of next objec
             next_x_loc = next_infra.pos[0]
             # Check if the bridge is L and if the next location is more east than the current location
             if bridge_name[-2:] == '(L' and prev_x_loc < next_x_loc:
