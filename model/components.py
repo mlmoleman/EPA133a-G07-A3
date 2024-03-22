@@ -278,8 +278,9 @@ class Vehicle(Agent):
         """
         Set the origin destination path of the vehicle
         """
-        self.path_ids = self.model.get_route(self.generated_by.unique_id)[0]
-        self.travel_distance = self.model.get_route(self.generated_by.unique_id)[1]
+        random_route = self.model.get_route(self.generated_by.unique_id)
+        self.path_ids = random_route[0]
+        self.travel_distance = random_route[1]
         # print("path:", self.path_ids, "distance", self.travel_distance)
     def step(self):
         """
