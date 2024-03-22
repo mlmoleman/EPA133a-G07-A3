@@ -42,8 +42,9 @@ Each bridge condition can be assigned a collapse chance. If a bridge is collapse
 The collapse chances for bridge conditions can be set as model parameters. 
 
 Key KPI's that are used include: 
-- Average driving time [km/hour]: the average time it takes for a vehicle to travel to its destination, controlled for the distance.
-- Average waiting time [min]: the average time that vehicles are waiting at bridges. 
+- Average driving time [min]: the average time it takes for a vehicle to travel to its destination.
+- Average delay time [min]: the average time that vehicles are delayed. 
+- Average speed [km]: the average speed for a vehicle to travel to its destination. 
 - Bride breakdowns [dmnl] : the amount of bridges of each condition that break down during a simulation. 
 
 ### Technologies used
