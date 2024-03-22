@@ -178,6 +178,7 @@ class BangladeshModel(Model):
         df.rename(columns={'index': 'id'}, inplace=True)
         # retrieve all roads in dataset
         roads = df['road'].unique().tolist()
+        # initialise the graph
         self.G = nx.DiGraph()
         # for each road in list roads
         for road in roads:
