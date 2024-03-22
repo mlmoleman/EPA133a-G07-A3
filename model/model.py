@@ -309,20 +309,20 @@ class BangladeshModel(Model):
         while True:
             # different source and sink
             sink = self.random.choice(self.sinks)
-            print("Sink: ", sink)
+            #print("Sink: ", sink)
             if sink is not source:
                 break
         # the dictionary key is the origin, destination combination:
         key = source, sink
-        print("Key: ", key)
+        #print("Key: ", key)
         # first, check if there already is a shortest path:
         if key in self.shortest_path_dict.keys():
             return self.shortest_path_dict[key]
         else:
-            print("If statement is accessed")
+            #print("If statement is accessed")
             # compute shortest path between origin and destination based on distance (which is weight)
             shortest_path = nx.shortest_path(network, source, sink, weight='weight')
-            print("Shortest path: ", shortest_path)
+            #print("Shortest path: ", shortest_path)
             # format shortest path in dictionary structure
             self.shortest_path_dict[key] = shortest_path
             return self.shortest_path_dict[key]
