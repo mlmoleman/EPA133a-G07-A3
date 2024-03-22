@@ -134,6 +134,7 @@ class BangladeshModel(Model):
         self.long_length_threshold = 200
         self.medium_length_threshold = 50
         self.short_length_threshold = 10
+
         self.generate_network()
         self.generate_model()
 
@@ -157,14 +158,13 @@ class BangladeshModel(Model):
         df.rename(columns={'index': 'id'}, inplace=True)
         # retrieve all roads in dataset
         roads = df['road'].unique().tolist()
-        # initialize graph
-        self.G = nx.DiGraph()
         # for each road in list roads
         for road in roads:
             road_subset = df[df['road'] == road]
             for index, row in df.iterrows():
                 self.G.add_node(row['id'], pos=(row['lat'], row['lon']), len=row['length'],
-                                typ=row['model_type'], road=row['road'], intersec=row['intersec_to'])
+                                typ=row['model_type'], road=row['road'], intersec=row['intersec_to'],
+                                km=row['km'])
             # retrieve all edges between bridges for one road
             edges = [(index, index + 1) for index, row in road_subset.iterrows()]
             # remove last one, which is out of bound
@@ -178,7 +178,7 @@ class BangladeshModel(Model):
             # add all edges
             self.G.add_edges_from(edges)
 
-            # get model type of all nodes
+        # get model type of all nodes
         typ = nx.get_node_attributes(self.G, 'typ')
         # get road which is intersected with N1 or N2
         intersec_to = nx.get_node_attributes(self.G, 'intersec')
@@ -205,11 +205,17 @@ class BangladeshModel(Model):
                     # add intersected edge
                     self.G.add_edge(key_typ, row_index, distance=0)
 
+        chainage = nx.get_node_attributes(self.G, 'km')
         for u, v in self.G.edges:
             if abs(v - u) == 1:
+                distance = abs(chainage[v] - chainage[u])
+                distance *= 1000
+
+
+
                 # obtain distance between nodes
-                distance = abs((1000 * df.iloc[u, df.columns.get_indexer(['km'])].values) -
-                               (1000 * df.iloc[v, df.columns.get_indexer(['km'])].values))
+                # distance = abs((1000 * df.iloc[u, df.columns.get_indexer(['km'])].values) -
+                               # (1000 * df.iloc[v, df.columns.get_indexer(['km'])].values))
                 # assign distance as weight to edge
                 # print("node 1:", u, "node2:", v, "distance", distance)
                 self.G[u][v]['distance'] = distance
@@ -338,7 +344,7 @@ class BangladeshModel(Model):
         and adds this path to path_ids_dict
         """
         # call network
-        network = self.G
+        network = self.generate_network()
         # determine the sink to calculate the shortest path to
         while True:
             # different source and sink
@@ -356,11 +362,11 @@ class BangladeshModel(Model):
             #print("If statement is accessed")
             # compute shortest path between origin and destination based on distance (which is weight)
             shortest_path = nx.shortest_path(network, source, sink, weight='distance')
-            shortest_path_length = 0
-            for index in range(len(shortest_path)-1):
-                distance_between_nodes = network[shortest_path[index]][shortest_path[index+1]]['distance']
-                shortest_path_length += distance_between_nodes
-                print("node:", index, index+1, "distance:", distance_between_nodes)
+            shortest_path_length = nx.shortest_path_length(network, source, sink, weight='distance')
+            #for index in range(len(shortest_path)-1):
+                #distance_between_nodes = network[shortest_path[index]][shortest_path[index+1]]['distance']
+                #shortest_path_length += distance_between_nodes
+                # print("node:", shortest_path[index], index, shortest_path[index+1], index+1, "distance:", distance_between_nodes)
             #print("Shortest path: ", shortest_path)
             # format shortest path in dictionary structure
             self.shortest_path_dict[key] = shortest_path, shortest_path_length
