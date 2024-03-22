@@ -206,24 +206,18 @@ class BangladeshModel(Model):
                 if (key_typ, row_index) not in self.G.edges:
                     # add intersected edge
                     self.G.add_edge(key_typ, row_index, distance=0)
-                else:
-                    row_index = row.index[1]
-                    # add intersected edge
-                    self.G.add_edge(key_typ, row_index, distance=0)
 
+        # retrieve all the chainages
         chainage = nx.get_node_attributes(self.G, 'km')
+        # for each set of edges
         for u, v in self.G.edges:
+            # if difference between node values equals 1
             if abs(v - u) == 1:
+                # compute distance based on difference in chainage
                 distance = abs(chainage[v] - chainage[u])
+                # from meters to km
                 distance *= 1000
-
-
-
-                # obtain distance between nodes
-                # distance = abs((1000 * df.iloc[u, df.columns.get_indexer(['km'])].values) -
-                               # (1000 * df.iloc[v, df.columns.get_indexer(['km'])].values))
-                # assign distance as weight to edge
-                # print("node 1:", u, "node2:", v, "distance", distance)
+                # add as distance attribute to edge
                 self.G[u][v]['distance'] = distance
 
         # return network
@@ -236,8 +230,7 @@ class BangladeshModel(Model):
         Warning: the labels are the same as the csv column labels
 
         """
-        # TODO call generate_network method within generate_model method?
-        # TODO alter generate model method accordingly
+        # import data
         df = pd.read_csv(self.file_name)
 
         # a list of names of roads to be generated
