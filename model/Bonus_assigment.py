@@ -9,6 +9,7 @@ import shapely.ops as sp_ops
 import warnings
 import os
 from shapely import buffer
+from shapely import wkt
 
 os.environ['USE_PYGEOS'] = '0'
 warnings.filterwarnings("ignore")
