@@ -1,9 +1,8 @@
 # import libraries
 import pandas as pd
-import networkx as nx
-import matplotlib.pyplot as plt
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
+
 
 def data_network(): 
     """
@@ -16,7 +15,8 @@ def data_network():
     # add intersection to column
     df_bridges['intersec_to'] = None
     # reposition columns
-    df_bridges = df_bridges[['road', 'km', 'type', 'model_type', 'name', 'length', 'condition', 'lat', 'lon', 'intersec_to']]
+    df_bridges = df_bridges[['road', 'km', 'type', 'model_type', 'name',
+                             'length', 'condition', 'lat', 'lon', 'intersec_to']]
 
     # import intersections data
     df_intersections = pd.read_csv('../data/intersections.csv')
@@ -29,7 +29,8 @@ def data_network():
     # create condition
     df_intersections['condition'] = None
     # format columns
-    df_intersections = df_intersections[['road', 'km', 'type', 'model_type', 'name', 'length', 'condition', 'lat', 'lon', 'intersec_to']]
+    df_intersections = df_intersections[['road', 'km', 'type', 'model_type', 'name',
+                                         'length', 'condition', 'lat', 'lon', 'intersec_to']]
     
     # get all intersected roads
     intersections = df_intersections['intersec_to'].unique().tolist()
@@ -48,10 +49,11 @@ def data_network():
     df = df.sort_values(by=['road', 'km'])
 
     # reset index
-    df = df.reset_index(drop = True)
+    df = df.reset_index(drop=True)
 
     # convert to csv
     df.to_csv('../data/bridges_intersected.csv')
-    
+
+
 # call function
 data_network()

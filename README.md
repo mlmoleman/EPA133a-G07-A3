@@ -54,17 +54,18 @@ The code is written and tested for Python 3.11.8. The specific packages used are
 
 Various Python files are included. Each has its purpose which will be briefly explained in the table underneath.
 
-| File              | Purpose                                                                                                                                                                                |
-|-------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| model.py          | Contains the model class which can use the components.py file in combination with the data produced by the different data files,  links.py and intersections.py to simulate the roads. |
-| components.py     | Contains the used classes for the model, except the model class itself.                                                                                                                |
-| links.py          | Creates the links based on the cleaned bridge dataset which is produced by the data.py file.                                                                                           |
-| intersections.py  | Creates the intersections between roads, using road data.                                                                                                                              |
+| File             | Purpose                                                                                                                                                                                |
+|------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| model.py         | Contains the model class which can use the components.py file in combination with the data produced by the different data files,  links.py and intersections.py to simulate the roads. |
+| components.py    | Contains the used classes for the model, except the model class itself.                                                                                                                |
+| links.py         | Creates the links based on the cleaned bridge dataset which is produced by the data.py file.                                                                                           |
+| intersections.py | Creates the intersections between roads, using road data.                                                                                                                              |
 | data_alignment.py | Aligns the bridge data with the intersection data created in the intersections.py file.                                                                                                |
-| data_bridges.py   | Contains the data cleaning process with regard to the bridge data.                                                                                                                     |
-| model_run.py      | Runs the model.py file once and stores the data produced by running the model.                                                                                                         |
-| model_batch.py    | Will run the model.py file multiple times but with different model configurations. Used to get the data per scenario.                                                                  |
-| model_viz.py      | Runs the model.py and creates a visualisation of the model dynamics in a separate window.                                                                                              |
+| data_bridges.py  | Contains the data cleaning process with regard to the bridge data.                                                                                                                     |
+| model_run.py     | Runs the model.py file once and stores the data produced by running the model.                                                                                                         |
+| model_batch.py   | Will run the model.py file multiple times but with different model configurations. Used to get the data per scenario.                                                                  |
+| model_viz.py     | Runs the model.py and creates a visualisation of the model dynamics in a separate window.                                                                                              |
+| visualisation.py | Creates visualisations of the experimental output.                                                                                                                                     |
 
 ### File structuring
 The folder has a specific structure that is as follows:
@@ -124,6 +125,7 @@ The model folder contains all the code files required to run the model and shoul
         ├── model_batch.py
         ├── model_run.py
         └── model_viz.py
+        └── visualisation.py
 
 Lastly, the report folder contains the report that provides detailed information on the analysis conducted for the Bangladesh case. 
 
