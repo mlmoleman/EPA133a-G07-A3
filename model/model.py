@@ -135,7 +135,6 @@ class BangladeshModel(Model):
         self.medium_length_threshold = 50
         self.short_length_threshold = 10
 
-
         self.G = self.generate_network()
         self.generate_model()
 
@@ -159,6 +158,7 @@ class BangladeshModel(Model):
         df.rename(columns={'index': 'id'}, inplace=True)
         # retrieve all roads in dataset
         roads = df['road'].unique().tolist()
+        # initialize graph
         self.G = nx.DiGraph()
         # for each road in list roads
         for road in roads:
@@ -204,6 +204,10 @@ class BangladeshModel(Model):
                 row_index = row.index[0]
                 # assign intersected edge to variable
                 if (key_typ, row_index) not in self.G.edges:
+                    # add intersected edge
+                    self.G.add_edge(key_typ, row_index, distance=0)
+                else:
+                    row_index = row.index[1]
                     # add intersected edge
                     self.G.add_edge(key_typ, row_index, distance=0)
 
