@@ -194,7 +194,7 @@ plt.savefig(main_folder_path + "/img/bonus_pair.png")
 plt.show()
 
 # Creates a bar plot
-plt.bar(bar_index, dict_length.values(), color="red")
+plt.bar(dict_length.keys(), dict_length.values(), color="red")
 # Create correct axis labels and title
 plt.xlabel("Road to which the N1 or N2 connects")
 plt.ylabel("Difference in kilometers")
