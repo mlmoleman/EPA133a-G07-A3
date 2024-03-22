@@ -15,7 +15,7 @@ warnings.filterwarnings("ignore")
 # Gets the path to main folder
 main_folder_path = os.path.normpath(os.getcwd() + os.sep + os.pardir)
 # Reads in the road data and turns it into a geodataframe
-df = pd.read_csv(main_folder_path + "\\data\\_roads3.csv")
+df = pd.read_csv(main_folder_path + "/data/_roads3.csv")
 gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.lon, df.lat), crs="EPSG:4326")
 
 # Creates a list of all the unique road names
@@ -75,7 +75,7 @@ intersections_N2 = gseries["N2"].intersection(intersecting_N2).drop("N2")
 gdf_N1 = gdf[gdf["road"] == "N1"]
 gdf_N2 = gdf[gdf["road"] == "N2"]
 # Saves the intersection points for the bonus assignment
-pd.concat([intersections_N1, intersections_N2]).to_csv(main_folder_path + "\\data\\intersections_BONUS.csv")
+pd.concat([intersections_N1, intersections_N2]).to_csv(main_folder_path + "/data/intersections_BONUS.csv")
 
 
 #
@@ -122,7 +122,7 @@ df_intersections_main_N2 = process_intersection_data(gdf_N2, intersections_N2)
 # Merge the result into one dataframe
 df_intersections_main = pd.concat([df_intersections_main_N1, df_intersections_main_N2], axis=0, ignore_index=True)
 # Store dataframe
-df_intersections_main.to_csv(main_folder_path + "\\data\\intersections_main.csv")
+df_intersections_main.to_csv(main_folder_path + "/data/intersections_main.csv")
 
 # Creates empty dataframe that will contain the LRPs on the side roads that intersect to the N1
 Side_to_N1 = gpd.GeoDataFrame(columns=list(gdf.columns) + ["intersec_to"], crs="EPSG:4326")
@@ -212,4 +212,4 @@ df_intersections_all = pd.concat([df_intersections_main,
 
 # Saves the intersection data to a csv
 main_folder_path = os.path.normpath(os.getcwd() + os.sep + os.pardir)
-df_intersections_all.to_csv(main_folder_path + "\\data\\intersections.csv")
+df_intersections_all.to_csv(main_folder_path + "/data/intersections.csv")
