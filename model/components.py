@@ -98,6 +98,7 @@ class Bridge(Infra):
         """A bridge collapses according to its chance of collapsing."""
         if not self.collapsed and self.collapse_chance > self.random.random():
             self.collapsed = True
+            self.model.collapsed_dict[self.condition] += 1
         else:
             pass
         return

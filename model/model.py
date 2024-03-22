@@ -59,12 +59,28 @@ def get_avg_speed(model):
         return 0
 
 
-def get_avg_collapse(model):
+def get_tot_collapsed(model):
     """
     Returns the average number of collapsed bridges per time step
     """
     collapsed = [a.collapsed for a in model.schedule.agents if isinstance(a, Bridge)]
     return collapsed.count(True)
+
+def get_A_collapsed(model):
+    condition = 'A'
+    return model.collapsed_dict[condition]
+
+def get_B_collapsed(model):
+    condition = 'B'
+    return model.collapsed_dict[condition]
+
+def get_C_collapsed(model):
+    condition = 'C'
+    return model.collapsed_dict[condition]
+
+def get_D_collapsed(model):
+    condition = 'D'
+    return model.collapsed_dict[condition]
 
 
 def set_lat_lon_bound(lat_min, lat_max, lon_min, lon_max, edge_ratio=0.02):
@@ -118,7 +134,7 @@ class BangladeshModel(Model):
     file_name = '../data/bridges_intersected_linked.csv'
 
     def __init__(self, seed=None, x_max=500, y_max=500, x_min=0, y_min=0,
-                 collapse_dict:defaultdict={'A': 0.0, 'B': 0.0, 'C': 0.0, 'D': 0.8}, routing_type: str = "shortest"):
+                 collapse_dict:defaultdict={'A': 0.05, 'B': 0.1, 'C': 0.2, 'D': 0.4}, routing_type: str = "shortest"):
 
         self.routing_type = routing_type
         self.collapse_dict = collapse_dict
@@ -140,6 +156,7 @@ class BangladeshModel(Model):
 
         self.driving_time_of_trucks = []
         self.speed_of_trucks = []
+        self.collapsed_dict = {'A': 0, 'B': 0, 'C': 0, 'D': 0}
 
     def generate_network(self):
         """
@@ -319,7 +336,11 @@ class BangladeshModel(Model):
                         "avg_waiting": get_avg_waiting,
                         "avg_driving_time": get_avg_driving,
                         "avg_speed": get_avg_speed,
-                        "avg_collapsed": get_avg_collapse
+                        "tot_collapsed": get_tot_collapsed,
+                        "A_collapsed": get_A_collapsed,
+                        "B_collapsed": get_B_collapsed,
+                        "C_collapsed": get_C_collapsed,
+                        "D_collapsed": get_D_collapsed
                         }
 
         # set up the data collector
